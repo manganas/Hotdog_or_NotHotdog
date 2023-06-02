@@ -42,7 +42,7 @@ class HotDogDataset(Dataset):
         # However, the latter imposes the danger that the hotdog is not in the center.
         # The former might not catch the hotdog, but maybe the next time it will :)
 
-        crop_size = self.get_min_resolutions(print_stats=True)
+        crop_size = self.get_min_resolutions(print_stats=False)
 
         crop_size = [int(min(crop_size))] * 2
 
