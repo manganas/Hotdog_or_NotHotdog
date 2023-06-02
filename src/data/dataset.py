@@ -8,6 +8,10 @@ import torch
 from torch.utils.data import Dataset
 from torchvision.datasets import ImageFolder
 import torchvision.transforms as transforms
+from PIL import Image
+
+import numpy as np
+from tqdm import tqdm
 
 
 class HotDogDataset(Dataset):
@@ -38,12 +42,15 @@ class HotDogDataset(Dataset):
         # However, the latter imposes the danger that the hotdog is not in the center.
         # The former might not catch the hotdog, but maybe the next time it will :)
 
-        crop_size = self.get_min_max_resolutions()
+        crop_size = self.get_min_resolutions(print_stats=True)
+
+        crop_size = [int(min(crop_size))] * 2
 
         crop = transforms.RandomCrop(crop_size)
 
         self.transforms_ = transforms.Compose(
             [
+                crop,
                 transforms.RandomGrayscale(),
                 transforms.RandomVerticalFlip(),
                 transforms.RandomHorizontalFlip(),
@@ -63,12 +70,36 @@ class HotDogDataset(Dataset):
     def __len__(self) -> int:
         return len(self.labels)
 
-    def get_min_max_resolutions(self, print_stats: bool = False) -> Tuple[int]:
+    def get_min_resolutions(self, print_stats: bool = False) -> Tuple[int]:
         """
         Method to get the min and max resolution of the images in the train folder.
         If print_stats is True, then it will print the statistics of the resolutions in height and width.
         """
-        pass
+
+        heights = np.zeros(len(self.images))
+        widths = np.zeros(len(self.images))
+
+        for i, image in tqdm(enumerate(self.images.imgs)):
+            img = Image.open(image[0])
+            heights[i] = img.height
+            widths[i] = img.width
+
+        if print_stats:
+            print(f"{self.data_path}")
+            print(
+                f"Mean height: {np.round(heights.mean(),2)}, Std heights: {np.round(heights.std(),2)}"
+            )
+            print(
+                f"Max height: {np.round(heights.max(),2)}, Min height: {np.round(heights.min(),2)}"
+            )
+            print(
+                f"Mean width: {np.round(widths.mean(),2)}, Std widths: {np.round(widths.std(),2)}\n"
+            )
+            print(
+                f"Max width: {np.round(widths.max(),2)}, Min width: {np.round(widths.min(),2)}"
+            )
+
+        return heights.min(), widths.min()
 
     def preprocess_save(self, output_path: str) -> None:
         """
