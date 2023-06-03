@@ -15,7 +15,9 @@ from tqdm import tqdm
 
 
 class HotDogDataset(Dataset):
-    def __init__(self, data_folder_path: str, train: bool = True) -> None:
+    def __init__(
+        self, data_folder_path: str, train: bool = True, transform=None
+    ) -> None:
         super(HotDogDataset, self).__init__()
 
         data_suffix = "train"
@@ -33,32 +35,10 @@ class HotDogDataset(Dataset):
         self.id_to_label = {i: lbl for (i, lbl) in enumerate(self.labels)}
         self.label_to_id = {lbl: i for (i, lbl) in enumerate(self.labels)}
 
-        blur_kernel = 5
-        normalize = transforms.Normalize([0.0] * 3, [1.0] * 3)
-
-        # If we crop the images the moment they are loaded and aded to the batch,
-        # then we need to decide upon the crop dimensions, whether the crop should be random
-        # and changed every epoch when the image is reploaded, or static in the middle eg.
-        # However, the latter imposes the danger that the hotdog is not in the center.
-        # The former might not catch the hotdog, but maybe the next time it will :)
-
-        crop_size = self.get_min_resolutions(print_stats=False)
-
-        crop_size = [int(min(crop_size))] * 2
-
-        crop = transforms.RandomCrop(crop_size)
-
-        self.transforms_ = transforms.Compose(
-            [
-                crop,
-                transforms.RandomGrayscale(),
-                transforms.RandomVerticalFlip(),
-                transforms.RandomHorizontalFlip(),
-                transforms.GaussianBlur(blur_kernel),
-                transforms.ToTensor(),
-                normalize,
-            ]
-        )
+        self.transforms_ = transform
+        # No resizing, can be a problem for no transformation passed!
+        if not self.transforms_:
+            self.transforms_ = transforms.Compose([transforms.ToTensor()])
 
     def __getitem__(self, index: int) -> Tensor:
         img = self.images[index]
@@ -126,11 +106,12 @@ def main(input_filepath: str):
     print()
 
     # Here we can preprocess and save to the processed folder tensors (.pth) or images (cropped etc.)
-    print('/nTrain set:\n')
+    print("/nTrain set:\n")
     train_data_set.get_min_resolutions(True)
 
-    print('/nTest set:\n')
+    print("/nTest set:\n")
     test_data_set.get_min_resolutions(True)
-    
+
+
 if __name__ == "__main__":
     main()
