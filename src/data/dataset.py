@@ -41,14 +41,15 @@ class HotDogDataset(Dataset):
             self.transforms_ = transforms.Compose([transforms.ToTensor()])
 
     def __getitem__(self, index: int) -> Tensor:
-        img = self.images[index]
+        # self.images is a tuple with the image and its class. Take the image only
+        img, label = self.images[index]
         return (
             self.transforms_(img),
-            torch.tensor(self.label_to_id[self.labels[index]], dtype=torch.int64),
+            torch.tensor(label, dtype=torch.int64),
         )
 
     def __len__(self) -> int:
-        return len(self.labels)
+        return len(self.images)
 
     def get_min_resolutions(self, print_stats: bool = False) -> Tuple[int]:
         """
