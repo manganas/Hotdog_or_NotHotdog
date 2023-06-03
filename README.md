@@ -3,7 +3,7 @@ Project 1 Repository for the course Deep Learning in Computer Vision
 
 
 
-### Week 1
+### Project 1
 
 * [ ] A description of your architecture and how you designed it? Did you start out with something else? How/why did you decide to change it?
 * [ ] How did you train it? Which optimizer did you use? Did you compare using different optimizers? Did you do other things to improve your raining?
