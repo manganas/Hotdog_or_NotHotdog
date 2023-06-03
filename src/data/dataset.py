@@ -64,7 +64,7 @@ class HotDogDataset(Dataset):
         img = self.images[index]
         return (
             self.transforms_(img),
-            torch.Tensor(self.label_to_id[self.labels[index]]),
+            torch.tensor(self.label_to_id[self.labels[index]], dtype=torch.int64),
         )
 
     def __len__(self) -> int:
@@ -126,7 +126,11 @@ def main(input_filepath: str):
     print()
 
     # Here we can preprocess and save to the processed folder tensors (.pth) or images (cropped etc.)
+    print('/nTrain set:\n')
+    train_data_set.get_min_resolutions(True)
 
-
+    print('/nTest set:\n')
+    test_data_set.get_min_resolutions(True)
+    
 if __name__ == "__main__":
     main()
