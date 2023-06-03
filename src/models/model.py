@@ -13,18 +13,19 @@ class CNN_model(nn.Module):
 
         # Should we also add Recurrent layers?
 
+        kernel_size = 3
+
         self.convolution_part = nn.Sequential(
-            nn.Conv2d(in_channels, 8, padding="same"),
+            nn.Conv2d(in_channels, 8, kernel_size, padding="same"),
             nn.LeakyReLU(),
-            nn.Conv2d(8, 16, padding="same"),
+            nn.Conv2d(8, 16, kernel_size, padding="same"),
             nn.LeakyReLU(),
             nn.BatchNorm2d(16),
-            nn.Conv2d(16, 32, padding="same"),
+            nn.Conv2d(16, 32, kernel_size, padding="same"),
             nn.LeakyReLU(),
-            nn.Conv2d(32, 32, padding="same"),
+            nn.Conv2d(32, 32, kernel_size, padding="same"),
             nn.LeakyReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Flatten(),
         )
 
         x = torch.rand(1, in_channels, h, w)
@@ -36,14 +37,15 @@ class CNN_model(nn.Module):
             nn.Linear(256, 128),
             nn.LeakyReLU(),
             nn.Linear(128, n_classes),
+            nn.LogSoftmax(dim=1),  # I am using NLLLoss for training!
         )
 
     def forward(self, x: Tensor) -> Tensor:
         x = self.convolution_part(x)
+        x = x.view(x.size(0), -1)
         x = self.fully_connected(x)
-        x = F.log_softmax(x, dim=1)
 
-        assert len(x.shape) == 2, "Not a tensor of shape N,2"
+        assert len(x.shape) == 2, "Not an array type of tensor"
         assert x.shape[-1] == 2, "Not two class probs returned"
 
         return x
