@@ -35,6 +35,10 @@ def main(config) -> None:
     # img_size = hparams["img_size"]
     rotation_deg = hparams["rotation_deg"]
 
+    # Model and optimizer
+    model_name = hparams["model"]
+    optim_name = hparams["optimizer"]
+
     # Paths
     raw_data_path = hparams["dataset_path"]
     saved_models_path = hparams["saved_models_path"]
@@ -132,7 +136,7 @@ def main(config) -> None:
         test_loss = []
         test_correct = 0
         model.eval()
-        for data, target in test_loader:
+        for data, target in tqdm(test_loader, desc="Test", leave=None):
             data, target = data.to(device), target.to(device)
             with torch.no_grad():
                 output = model(data)
@@ -151,7 +155,11 @@ def main(config) -> None:
         # Save the model weights
         if epoch % save_per_n_epochs == 0:
             # save weights
-            torch.save(model, saved_models_path)
+            # torch.save(model, os.join(saved_models_path,model_name+'.pt' ))
+            torch.save(
+                {"model": model.state_dict(), "optimizer": optimizer.state_dict()},
+                os.path.join(saved_models_path, model_name + "_" + optim_name + ".pt"),
+            )
 
     # After training is done, we should use the test images or another,
     # never seen test image set and generate a confusion matrix, as well as the images that are classified wrong.

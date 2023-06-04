@@ -77,13 +77,16 @@ class VGG_n_model(nn.Module):
         children = list(model.children())
 
         self.feature_extractor = nn.Sequential(*children[0])
-        self.adataptive_average_pooling = children[1]
+        self.adaptive_average_pooling = children[1]
 
         # per 3. Next layer is -4
         self.fully_connected = nn.Sequential(*children[2])
 
         # Freeze the pretrained layers
         for param in self.feature_extractor.parameters():
+            param.requires_grad = False
+
+        for param in self.adaptive_average_pooling.parameters():
             param.requires_grad = False
 
         for param in self.fully_connected.parameters():
@@ -97,7 +100,7 @@ class VGG_n_model(nn.Module):
     def forward(self, x):
         x = self.feature_extractor(x)
 
-        x = self.adataptive_average_pooling(x)
+        x = self.adaptive_average_pooling(x)
 
         x = x.view(x.size(0), -1)
 
@@ -112,7 +115,7 @@ def main():
     model = VGG_n_model()
     print(model.feature_extractor)
     print("-" * 10)
-    print(model.adataptive_average_pooling)
+    print(model.adaptive_average_pooling)
     print("-" * 10)
     print(model.fully_connected)
     print("-" * 10)
