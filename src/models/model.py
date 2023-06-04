@@ -55,35 +55,69 @@ class CNN_model(nn.Module):
         return out.shape[1] * out.shape[2] * out.shape[3]
 
 
-class PretrainedModel(nn.Module):
+class VGG_n_model(nn.Module):
     """
-    Instantiates a pretrained model of choice, keeps the first layers_keep layers
-    and appends a fully connected network, that is trainable,
-    for classification in 2 classes: hotdog or nothotdog
+    VGG based pretrained model.
+    n is indicative of the pretrained model layers used,
+    should probably be changed to reflect that.
     """
 
-    def __init__(self, model_type: nn.Module, layers_keep: int) -> None:
-        super(PretrainedModel, self).__init__()
+    def __init__(self) -> None:
+        super(VGG_n_model, self).__init__()
 
-    def forward(self, x: Tensor) -> Tensor:
-        raise NotImplementedError
+        # From https://pytorch.org/hub/pytorch_vision_vgg/
+        # *_bn stands for batch normalized version
+        # from torchvision.models import vgg19_bn, VGG19_BN_Weights
+        from torchvision.models.vgg import vgg19_bn, VGG19_BN_Weights
+
+        # Step 1: Initialize model with the best available weights
+        weights = VGG19_BN_Weights.DEFAULT
+        model = vgg19_bn(weights=weights)
+
+        children = list(model.children())
+
+        self.feature_extractor = nn.Sequential(*children[0])
+        self.adataptive_average_pooling = children[1]
+
+        # per 3. Next layer is -4
+        self.fully_connected = nn.Sequential(*children[2])
+
+        # Freeze the pretrained layers
+        for param in self.feature_extractor.parameters():
+            param.requires_grad = False
+
+        for param in self.fully_connected.parameters():
+            param.requires_grad = False
+
+        # The last layer of VGG19_bn has 4096 -> 1000 features. changed to 2 features, since 2 classes
+        self.custom_fc_layer = nn.Sequential(
+            nn.Linear(in_features=1000, out_features=2, bias=True), nn.LogSoftmax(dim=1)
+        )
+
+    def forward(self, x):
+        x = self.feature_extractor(x)
+
+        x = self.adataptive_average_pooling(x)
+
+        x = x.view(x.size(0), -1)
+
+        x = self.fully_connected(x)
+
+        x = self.custom_fc_layer(x)
+
+        return x
 
 
-# class VGG_n_model(nn.Module):
-#     """
-#     VGG based pretrained model.
-#     n is indicative of the pretrained model layers used,
-#     should probably be changed to reflect that.
-#     """
+def main():
+    model = VGG_n_model()
+    print(model.feature_extractor)
+    print("-" * 10)
+    print(model.adataptive_average_pooling)
+    print("-" * 10)
+    print(model.fully_connected)
+    print("-" * 10)
+    print(model.custom_fc_layer)
 
-#     from torchvision.models.vgg import vgg
 
-#     def __init__(self) -> None:
-#         super(VGG_n_model, self).__init__()
-
-#         # From https://pytorch.org/hub/pytorch_vision_vgg/
-#         mean_ = [0.485, 0.456, 0.406]
-#         std_ = [0.229, 0.224, 0.225]
-
-#     def forward(self, x):
-#         return x
+if __name__ == "__main__":
+    main()

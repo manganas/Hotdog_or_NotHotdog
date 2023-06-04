@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 
 from src.data.dataset import HotDogDataset
-from src.models.model import CNN_model
+from src.models.model import CNN_model, VGG_n_model
 
 from tqdm import tqdm
 import numpy as np
@@ -32,7 +32,7 @@ def main(config) -> None:
     seed = hparams["seed"]
 
     # Transformation parameters
-    img_size = hparams["img_size"]
+    # img_size = hparams["img_size"]
     rotation_deg = hparams["rotation_deg"]
 
     # Paths
@@ -52,62 +52,33 @@ def main(config) -> None:
 
     torch.manual_seed(seed)
 
-    # Transformations for training and test sets
-    train_images_mean = [0.5] * 3
-    train_images_std = [1.0] * 3
-    resize_dims = [img_size] * 2
-
-    # # Maybe add some blurring
-    # train_transformation = transforms.Compose(
-    #     [
-    #         transforms.Resize(
-    #             resize_dims, interpolation=transforms.InterpolationMode.BICUBIC
-    #         ),
-    #         transforms.RandomHorizontalFlip(),
-    #         transforms.RandomVerticalFlip(),
-    #         transforms.RandomGrayscale(p=0.1),
-    #         transforms.RandomRotation(rotation_deg),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize(train_images_mean, train_images_std),
-    #     ]
-    # )
-
-    # # Need not have the same transformations as for training, other than resizing and tensorizing. Maybe normalize with train data
-    # test_transformation = transforms.Compose(
-    #     [
-    #         transforms.Resize(
-    #             resize_dims, interpolation=transforms.InterpolationMode.BICUBIC
-    #         ),
-    #         transforms.ToTensor(),
-    #         # transforms.Normalize(train_images_mean, train_images_std)
-    #     ]
-    # )
-    
     # Standard preprocessing for ResNet and VGG
     # https://pytorch.org/hub/pytorch_vision_resnet/
     # https://pytorch.org/hub/pytorch_vision_vgg/
-    
+
     # Maybe add some blurring
-    train_transformation = transforms.Compose([
+    train_transformation = transforms.Compose(
+        [
             transforms.Resize(256),
             transforms.CenterCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.RandomGrayscale(p=0.1),
+            transforms.RandomRotation(rotation_deg),
             transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])]
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
     )
 
     # Need not have the same transformations as for training, other than resizing and tensorizing. Maybe normalize with train data
     test_transformation = transforms.Compose(
         [
-            transforms.Resize(
-                resize_dims, interpolation=transforms.InterpolationMode.BICUBIC
-            ),
+            transforms.Resize(256),
+            transforms.CenterCrop(224),
             transforms.ToTensor(),
-            # transforms.Normalize(train_images_mean, train_images_std)
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ]
     )
-
-
-    preprocess = 
 
     # Create the datasets and dataloaders
     trainset = HotDogDataset(raw_data_path, train=True, transform=train_transformation)
@@ -119,7 +90,9 @@ def main(config) -> None:
     # Define model
     in_channels = 3  # RGB image
     n_classes = 2  # Hotdog or not hotdog
-    model = CNN_model(in_channels, n_classes, img_size, img_size)
+    img_size = 224  # from vgg and resnet cropped, see transformations above
+    # model = CNN_model(in_channels, n_classes, img_size, img_size)
+    model = VGG_n_model()
     model.to(device)
 
     # Define optimizer and loss function
