@@ -1,5 +1,5 @@
-/data/
-
+./data/
+./pretrained/
 .vscode
 
 # Byte-compiled / optimized / DLL files
