@@ -9,11 +9,17 @@ from src.models.model import CNN_model, VGG_19_model, ResNet_model
 
 from tqdm import tqdm
 import numpy as np
+import pickle
 
 import os
 import logging
 import hydra
 from omegaconf import OmegaConf
+
+import wandb
+
+# Initialize wandb
+wandb.init()
 
 # Initialize the logger
 log = logging.getLogger(__name__)
@@ -104,6 +110,8 @@ def main(config) -> None:
     else:
         model = CNN_model(in_channels, n_classes, img_size, img_size)
 
+    # Magic
+    wandb.watch(model, log_freq=50)
     model.to(device)
 
     # Define optimizer
@@ -173,14 +181,25 @@ def main(config) -> None:
             f"Accuracy train: {out_dict['train_acc'][-1]*100:.1f}%\t test: {out_dict['test_acc'][-1]*100:.1f}%",
         )
 
+        wandb.log(out_dict)
+
         # Save the model weights
         if epoch % save_per_n_epochs == 0:
             # save weights
             # torch.save(model, os.join(saved_models_path,model_name+'.pt' ))
+            # torch.save(
+            #     {"model": model.state_dict(), "optimizer": optimizer.state_dict()},
+            #     os.path.join(saved_models_path, model_name + "_" + optim_name + ".pt"),
+            # )
             torch.save(
                 {"model": model.state_dict(), "optimizer": optimizer.state_dict()},
-                os.path.join(saved_models_path, model_name + "_" + optim_name + ".pt"),
+                f"{saved_models_path}{model_name}_{optim_name}.pt",
             )
+
+    with open(
+        saved_models_path + f"{model_name}_{optim_name}_{lr}_{n_epochs}.pkl", "wb"
+    ) as handle:
+        pickle.dump(out_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # After training is done, we should use the test images or another,
     # never seen test image set and generate a confusion matrix, as well as the images that are classified wrong.
