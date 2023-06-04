@@ -36,8 +36,8 @@ def main(config) -> None:
     rotation_deg = hparams["rotation_deg"]
 
     # Model and optimizer
-    model_name = hparams["model"]
-    optim_name = hparams["optimizer"]
+    model_name = hparams["model"].lower().strip()
+    optim_name = hparams["optimizer"].lower().strip()
 
     # Paths
     raw_data_path = hparams["dataset_path"]
@@ -95,13 +95,34 @@ def main(config) -> None:
     in_channels = 3  # RGB image
     n_classes = 2  # Hotdog or not hotdog
     img_size = 224  # from vgg and resnet cropped, see transformations above
-    # model = CNN_model(in_channels, n_classes, img_size, img_size)
-    model = VGG_n_model()
+
+    # Improve implementation later!
+    if model_name == "vgg":
+        model = VGG_n_model()
+    # elif model_name=='resnet':
+    #     model = ResNet_model()
+    else:
+        model = CNN_model(in_channels, n_classes, img_size, img_size)
+
     model.to(device)
 
-    # Define optimizer and loss function
+    # Define optimizer
+
     weight_decay = 0  # Similar to L2 regularization. With dropout not really needed
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    if optim_name == "sgd":
+        momentum = hparams["momentum"]
+        optimizer = torch.optim.SGD(
+            model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
+        )
+    # elif optim_name=='adam':
+    #     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    else:
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=lr, weight_decay=weight_decay
+        )
+
+    print(model)
+    print(optimizer)
 
     # Begin training loop
     out_dict = {"train_acc": [], "test_acc": [], "train_loss": [], "test_loss": []}
