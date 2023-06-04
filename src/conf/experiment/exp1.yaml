@@ -3,10 +3,14 @@ dataset_path: '~/Documents/DTU/June_2023/Hotdog_or_NotHotodog/data/raw/'
 saved_models_path: '~/Documents/DTU/June_2023/Hotdog_or_NotHotodog/models/'
 
 # Tranforms params
-img_size: 128
+# img_size: 128 # Using the standard values for VGG and ResNet
 rotation_deg: 40
 
 # Training params
+optimizer: 'SGD'
+momentum: 0.9 # For SGD optimizer
+model: 'custom' # can be custom, vgg and resnet
+keep_n: 8
 batch_size: 16
 lr: 0.01
 n_epochs: 20
