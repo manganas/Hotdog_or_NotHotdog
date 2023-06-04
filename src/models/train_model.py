@@ -37,11 +37,13 @@ def main(config) -> None:
 
     # Paths
     raw_data_path = hparams["dataset_path"]
+    saved_models_path = hparams["saved_models_path"]
 
     # Training parameters
     n_epochs = hparams["n_epochs"]
     lr = hparams["lr"]
     batch_size = hparams["batch_size"]
+    save_per_n_epochs = hparams["save_after_n_epochs"]
 
     ## Training loop init
 
@@ -101,6 +103,7 @@ def main(config) -> None:
     # Begin training loop
     out_dict = {"train_acc": [], "test_acc": [], "train_loss": [], "test_loss": []}
 
+    log.info("Start training...")
     for epoch in tqdm(range(n_epochs), unit="epoch"):
         model.train()
         # For each epoch
@@ -145,6 +148,14 @@ def main(config) -> None:
             f"Loss train: {np.mean(train_loss):.3f}\t test: {np.mean(test_loss):.3f}\t",
             f"Accuracy train: {out_dict['train_acc'][-1]*100:.1f}%\t test: {out_dict['test_acc'][-1]*100:.1f}%",
         )
+
+        # Save the model weights
+        if epoch % save_per_n_epochs == 0:
+            # save weights
+            torch.save(model, saved_models_path)
+
+    # After training is done, we should use the test images or another,
+    # never seen test image set and generate a confusion matrix, as well as the images that are classified wrong.
 
 
 if __name__ == "__main__":

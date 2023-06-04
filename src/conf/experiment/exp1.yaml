@@ -1,11 +1,14 @@
 # @package _group_
 dataset_path: '~/Documents/DTU/June_2023/Hotdog_or_NotHotodog/data/raw/'
+saved_models_path: '~/Documents/DTU/June_2023/Hotdog_or_NotHotodog/models/'
 
 # Tranforms params
 img_size: 128
 rotation_deg: 40
+
+# Training params
 batch_size: 16
 lr: 0.01
 n_epochs: 20
-
 seed: 7
+save_after_n_epochs: 10
