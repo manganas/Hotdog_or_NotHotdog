@@ -53,3 +53,38 @@ class CNN_model(nn.Module):
     def get_output_conv_shape(self, x: Tensor) -> int:
         out = self.convolution_part(x)
         return out.shape[1] * out.shape[2] * out.shape[3]
+
+
+class PretrainedModel(nn.Module):
+    """
+    Instantiates a pretrained model of choice, keeps the first layers_keep layers
+    and appends a fully connected network, that is trainable,
+    for classification in 2 classes: hotdog or nothotdog
+    """
+
+    def __init__(self, model_type: nn.Module, layers_keep: int) -> None:
+        super(PretrainedModel, self).__init__()
+        pass
+
+    def forward(self, x: Tensor) -> Tensor:
+        raise NotImplementedError
+
+
+# class VGG_n_model(nn.Module):
+#     """
+#     VGG based pretrained model.
+#     n is indicative of the pretrained model layers used,
+#     should probably be changed to reflect that.
+#     """
+
+#     from torchvision.models.vgg import vgg
+
+#     def __init__(self) -> None:
+#         super(VGG_n_model, self).__init__()
+
+#         # From https://pytorch.org/hub/pytorch_vision_vgg/
+#         mean_ = [0.485, 0.456, 0.406]
+#         std_ = [0.229, 0.224, 0.225]
+
+#     def forward(self, x):
+#         return x
