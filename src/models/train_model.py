@@ -62,6 +62,7 @@ def main(config) -> None:
 
     torch.manual_seed(seed)
 
+
     # Standard preprocessing for ResNet and VGG
     # https://pytorch.org/hub/pytorch_vision_resnet/
     # https://pytorch.org/hub/pytorch_vision_vgg/
@@ -182,6 +183,8 @@ def main(config) -> None:
         )
 
         wandb.log(out_dict)
+        wandb.log({"Training accuracy": out_dict['train_acc'][-1]*100, "Test accuracy": out_dict['test_acc'][-1]*100})
+        wandb.log({"Training loss": np.mean(train_loss) , "Test loss": np.mean(test_loss) })
 
         # Save the model weights
         if epoch % save_per_n_epochs == 0:
@@ -197,7 +200,7 @@ def main(config) -> None:
             )
 
         with open(
-            saved_models_path + f"{model_name}_{optim_name}_{lr}_{n_epochs}.pkl", "wb"
+            'testing_save_dict.pkl', "wb"
         ) as handle:
             pickle.dump(out_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 

@@ -1,18 +1,18 @@
 # @package _group_
-dataset_path: '~/Documents/DTU/June_2023/Hotdog_or_NotHotodog/data/raw/'
-saved_models_path: '~/Documents/DTU/June_2023/Hotdog_or_NotHotodog/models/'
+dataset_path: '/dtu/datasets1/02514/hotdog_nothotdog'
+saved_models_path: '~/git/Hotdog_or_NotHotodog/models/'
 
 # Tranforms params
 # img_size: 128 # Using the standard values for VGG and ResNet
 rotation_deg: 40
 
 # Training params
-optimizer: 'Adam'
+optimizer: 'SGD'
 momentum: 0.9 # For SGD optimizer
-model: 'custom' # can be custom, vgg and resnet
+model: 'vgg' # can be custom, vgg and resnet
 keep_n: 8
-batch_size: 32
-lr: 0.01
-n_epochs: 20
+batch_size: 64
+lr: 0.001
+n_epochs: 40
 seed: 7
 save_after_n_epochs: 10
