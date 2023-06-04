@@ -55,7 +55,7 @@ class CNN_model(nn.Module):
         return out.shape[1] * out.shape[2] * out.shape[3]
 
 
-class VGG_n_model(nn.Module):
+class VGG_19_model(nn.Module):
     """
     VGG based pretrained model.
     n is indicative of the pretrained model layers used,
@@ -63,14 +63,14 @@ class VGG_n_model(nn.Module):
     """
 
     def __init__(self) -> None:
-        super(VGG_n_model, self).__init__()
+        super(VGG_19_model, self).__init__()
 
         # From https://pytorch.org/hub/pytorch_vision_vgg/
         # *_bn stands for batch normalized version
         # from torchvision.models import vgg19_bn, VGG19_BN_Weights
         from torchvision.models.vgg import vgg19_bn, VGG19_BN_Weights
 
-        # Step 1: Initialize model with the best available weights
+        # Initialize model with the best available weights
         weights = VGG19_BN_Weights.DEFAULT
         model = vgg19_bn(weights=weights)
 
@@ -79,7 +79,7 @@ class VGG_n_model(nn.Module):
         self.feature_extractor = nn.Sequential(*children[0])
         self.adaptive_average_pooling = children[1]
 
-        # per 3. Next layer is -4
+        # per 3. If I remove the last linear layer (4096->1000), then I have [-1]. Next layer is -4
         self.fully_connected = nn.Sequential(*children[2])
 
         # Freeze the pretrained layers
@@ -92,7 +92,7 @@ class VGG_n_model(nn.Module):
         for param in self.fully_connected.parameters():
             param.requires_grad = False
 
-        # The last layer of VGG19_bn has 4096 -> 1000 features. changed to 2 features, since 2 classes
+        # The last layer of VGG19_bn has output 1000 features. Added a layer from 1000 to 2 features, since 2 classes
         self.custom_fc_layer = nn.Sequential(
             nn.Linear(in_features=1000, out_features=2, bias=True), nn.LogSoftmax(dim=1)
         )
@@ -111,15 +111,60 @@ class VGG_n_model(nn.Module):
         return x
 
 
+class ResNet_model(nn.Module):
+    """
+    ResNet based pretrained model.
+    """
+
+    def __init__(self) -> None:
+        super(ResNet_model, self).__init__()
+
+        # From https://pytorch.org/hub/pytorch_vision_resnet/
+        # *_bn stands for batch normalized version
+        # from torchvision.models import vgg19_bn, VGG19_BN_Weights
+        from torchvision.models.resnet import resnet152, ResNet152_Weights
+
+        # Initialize model with the best available weights
+        weights = ResNet152_Weights.DEFAULT
+        model = resnet152(weights=weights)
+
+        children = list(model.children())
+
+        self.resnet = nn.Sequential(*children)[:-1]
+        self.fully_connected = nn.Sequential(*children)[-1]
+
+        # Freeze the pretrained layers
+        for param in self.resnet.parameters():
+            param.requires_grad = False
+
+        for param in self.fully_connected.parameters():
+            param.requires_grad = False
+
+        # The last layer of ResNet152 has 1000 features. added a layer to 2 features, since 2 classes
+        self.custom_fc_layer = nn.Sequential(
+            nn.Linear(in_features=1000, out_features=2, bias=True), nn.LogSoftmax(dim=1)
+        )
+
+    def forward(self, x):
+        x = self.resnet(x)
+
+        x = x.view(x.size(0), -1)
+
+        x = self.fully_connected(x)
+
+        x = self.custom_fc_layer(x)
+
+        return x
+
+
 def main():
-    model = VGG_n_model()
-    print(model.feature_extractor)
-    print("-" * 10)
-    print(model.adaptive_average_pooling)
-    print("-" * 10)
-    print(model.fully_connected)
-    print("-" * 10)
-    print(model.custom_fc_layer)
+    # model = ResNet_model()
+    # print(model.resnet)
+
+    # x = torch.rand(1, 3, 224, 224)
+    # print(model(x))
+
+    pass
 
 
 if __name__ == "__main__":

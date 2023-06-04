@@ -5,7 +5,7 @@ import torch.nn.functional as F
 import torchvision.transforms as transforms
 
 from src.data.dataset import HotDogDataset
-from src.models.model import CNN_model, VGG_n_model
+from src.models.model import CNN_model, VGG_19_model, ResNet_model
 
 from tqdm import tqdm
 import numpy as np
@@ -98,9 +98,9 @@ def main(config) -> None:
 
     # Improve implementation later!
     if model_name == "vgg":
-        model = VGG_n_model()
-    # elif model_name=='resnet':
-    #     model = ResNet_model()
+        model = VGG_19_model()
+    elif model_name == "resnet":
+        model = ResNet_model()
     else:
         model = CNN_model(in_channels, n_classes, img_size, img_size)
 
