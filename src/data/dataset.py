@@ -2,7 +2,6 @@ from torch import Tensor
 from typing import Tuple
 
 import os
-import click
 
 import torch
 from torch.utils.data import Dataset
@@ -12,6 +11,8 @@ from PIL import Image
 
 import numpy as np
 from tqdm import tqdm
+
+import hydra
 
 
 class HotDogDataset(Dataset):
@@ -90,9 +91,15 @@ class HotDogDataset(Dataset):
         pass
 
 
-@click.command()
-@click.argument("input_filepath", type=click.Path(exists=True))
-def main(input_filepath: str):
+@hydra.main(config_path="../conf", config_name="default_config.yaml")
+def main(config):
+    ## Hydra parameters
+    hparams = config.experiment
+
+    # Paths
+    input_filepath = hparams["dataset_path"]
+
+    # Instantiate datasets to get desired data, metrics and sanity checks
     train_data_set = HotDogDataset(data_folder_path=input_filepath, train=True)
     test_data_set = HotDogDataset(data_folder_path=input_filepath, train=False)
 

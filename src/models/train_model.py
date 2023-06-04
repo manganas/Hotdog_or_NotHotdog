@@ -7,42 +7,55 @@ import torchvision.transforms as transforms
 from src.data.dataset import HotDogDataset
 from src.models.model import CNN_model
 
-from pathlib import Path
-import click
 from tqdm import tqdm
 import numpy as np
 
-# Set the device as a global variable.
-# For torch convention, it is lowercase.
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Training is running on: {device}")
+import os
+import logging
+import hydra
+from omegaconf import OmegaConf
+
+# Initialize the logger
+log = logging.getLogger(__name__)
 
 
 def loss_fun(output, target):
     return F.nll_loss(output, target)
 
 
-@click.command()
-@click.argument("input_filepath", type=click.Path(exists=True))
-@click.option("--batch_size", default=32, help="batch size for training and testing")
-@click.option("--img_size", default=128, help="square image resolution, size x size")
-@click.option(
-    "--rotation_deg", default=45, help="degrees for image rotation, -deg to + deg"
-)
-def main(
-    input_filepath: str, batch_size: int, img_size: int, rotation_deg: float
-) -> None:
-    # HARDCODED variables to not forget later!
-    lr = 0.01  # Hardcoded for now, too many input arguments in main()!
-    n_epochs = 40
+@hydra.main(config_path="../conf", config_name="default_config.yaml")
+def main(config) -> None:
+    ## Hydra config parameters
+    print(f"configuration: \n {OmegaConf.to_yaml(config)}")
+
+    hparams = config.experiment
+    seed = hparams["seed"]
+
+    # Transformation parameters
+    img_size = hparams["img_size"]
+    rotation_deg = hparams["rotation_deg"]
+
+    # Paths
+    raw_data_path = hparams["dataset_path"]
+
+    # Training parameters
+    n_epochs = hparams["n_epochs"]
+    lr = hparams["lr"]
+    batch_size = hparams["batch_size"]
+
+    ## Training loop init
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Training is running on: {device}")
+
+    torch.manual_seed(seed)
 
     # Transformations for training and test sets
     train_images_mean = [0.5] * 3
     train_images_std = [1.0] * 3
-    resize_dims = [img_size, img_size]
+    resize_dims = [img_size] * 2
 
     # Maybe add some blurring
-
     train_transformation = transforms.Compose(
         [
             transforms.Resize(
@@ -69,10 +82,10 @@ def main(
     )
 
     # Create the datasets and dataloaders
-    trainset = HotDogDataset(input_filepath, train=True, transform=train_transformation)
+    trainset = HotDogDataset(raw_data_path, train=True, transform=train_transformation)
     train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
 
-    testset = HotDogDataset(input_filepath, train=False, transform=test_transformation)
+    testset = HotDogDataset(raw_data_path, train=False, transform=test_transformation)
     test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
 
     # Define model

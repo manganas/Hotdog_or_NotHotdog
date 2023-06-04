@@ -64,7 +64,6 @@ class PretrainedModel(nn.Module):
 
     def __init__(self, model_type: nn.Module, layers_keep: int) -> None:
         super(PretrainedModel, self).__init__()
-        pass
 
     def forward(self, x: Tensor) -> Tensor:
         raise NotImplementedError
