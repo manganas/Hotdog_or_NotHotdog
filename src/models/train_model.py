@@ -193,13 +193,13 @@ def main(config) -> None:
             # )
             torch.save(
                 {"model": model.state_dict(), "optimizer": optimizer.state_dict()},
-                f"{saved_models_path}{model_name}_{optim_name}.pt",
+                "testing_save_model.pt",
             )
 
-    with open(
-        saved_models_path + f"{model_name}_{optim_name}_{lr}_{n_epochs}.pkl", "wb"
-    ) as handle:
-        pickle.dump(out_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        with open(
+            saved_models_path + f"{model_name}_{optim_name}_{lr}_{n_epochs}.pkl", "wb"
+        ) as handle:
+            pickle.dump(out_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     # After training is done, we should use the test images or another,
     # never seen test image set and generate a confusion matrix, as well as the images that are classified wrong.
