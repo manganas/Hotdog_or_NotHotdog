@@ -1,8 +1,0 @@
-experiment:
-  dataset_path: ~/Documents/DTU/June_2023/Hotdog_or_NotHotodog/data/raw/
-  img_size: 128
-  rotation_deg: 40
-  batch_size: 16
-  lr: 0.01
-  n_epochs: 20
-  seed: 7
