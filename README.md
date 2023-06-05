@@ -1,7 +1,16 @@
 # Hotdog_or_NotHotodog
 Project 1 Repository for the course Deep Learning in Computer Vision
 
+# Installation
 
+* (optional for HPC):  module load python3/3.x.x
+* python3 -m venv venv_1
+* source venv_1/bin/activate
+* make requirements
+
+# How to Run
+## Train the model
+* make train
 
 ### Project 1
 
