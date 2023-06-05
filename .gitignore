@@ -1,4 +1,7 @@
 /data/
+/outputs/
+/wandb/
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
