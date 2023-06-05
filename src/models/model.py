@@ -94,6 +94,7 @@ class VGG_19_model(nn.Module):
 
         # The last layer of VGG19_bn has output 1000 features. Added a layer from 1000 to 2 features, since 2 classes
         self.custom_fc_layer = nn.Sequential(
+            nn.ReLU(),
             nn.Linear(in_features=1000, out_features=2, bias=True), nn.LogSoftmax(dim=1)
         )
 
@@ -142,6 +143,7 @@ class ResNet_model(nn.Module):
 
         # The last layer of ResNet152 has 1000 features. added a layer to 2 features, since 2 classes
         self.custom_fc_layer = nn.Sequential(
+            nn.ReLU(),
             nn.Linear(in_features=1000, out_features=2, bias=True), nn.LogSoftmax(dim=1)
         )
 

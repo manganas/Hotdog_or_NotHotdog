@@ -181,8 +181,12 @@ def main(config) -> None:
             f"Loss train: {np.mean(train_loss):.3f}\t test: {np.mean(test_loss):.3f}\t",
             f"Accuracy train: {out_dict['train_acc'][-1]*100:.1f}%\t test: {out_dict['test_acc'][-1]*100:.1f}%",
         )
-
-        wandb.log(out_dict)
+        
+        # Log for hydra
+        log.info(f"Epoch {epoch+1} complete! Training Loss: {np.mean(train_loss)}, Eval Loss: {np.mean(test_loss)}")
+        log.info(f"Epoch {epoch+1} complete! Training Accuracy: {out_dict['train_acc'][-1]*100}, Eval Accuracy: {out_dict['test_acc'][-1]*100}")
+        
+        # Log for wandb
         wandb.log({"Training accuracy": out_dict['train_acc'][-1]*100, "Test accuracy": out_dict['test_acc'][-1]*100})
         wandb.log({"Training loss": np.mean(train_loss) , "Test loss": np.mean(test_loss) })
 
