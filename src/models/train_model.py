@@ -25,7 +25,7 @@ wandb.init()
 log = logging.getLogger(__name__)
 
 
-def get_transforms(use_augm:bool=True):
+def get_transforms(rotation_deg:float, use_augm:bool=True):
     if use_augm:
         # Standard preprocessing for ResNet and VGG
         # https://pytorch.org/hub/pytorch_vision_resnet/
@@ -136,7 +136,7 @@ def main(config) -> None:
     #     ]
     # )
     
-    train_transformation, test_transformation = get_transforms(use_augm)
+    train_transformation, test_transformation = get_transforms(rotation_deg,use_augm)
 
     # Create the datasets and dataloaders
     trainset = HotDogDataset(raw_data_path, train=True, transform=train_transformation)
