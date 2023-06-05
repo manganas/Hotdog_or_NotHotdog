@@ -12,3 +12,4 @@ hydra-core
 omegaconf
 wandb
 six
+matplotlib

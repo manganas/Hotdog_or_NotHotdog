@@ -3,6 +3,8 @@ from torch.utils.data import DataLoader
 from torch import nn, Tensor
 import torch.nn.functional as F
 import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+from typing import Tuple
 
 from src.data.dataset import HotDogDataset
 from src.models.model import CNN_model, VGG_19_model, ResNet_model
@@ -25,8 +27,49 @@ wandb.init()
 log = logging.getLogger(__name__)
 
 
-def generate_plots(out_dict: dict):
-    pass
+def generate_plots(out_dict: dict, info:Tuple,  figsize:Tuple[int]=(16,8))-> None:
+    '''
+    out_dict = {"train_acc": [], "test_acc": [], "train_loss": [], "test_loss": []}
+    info = (model_name, optimizer_name, lr)    
+    '''
+    
+    model_name, optimizer_name, learning_rate = info
+    learning_rate = str(learning_rate)
+
+    train_acc = np.array(out_dict["train_acc"])
+    test_acc = np.array(out_dict["test_acc"])
+
+    train_loss = np.array(out_dict["train_loss"])
+    test_loss = np.array(out_dict["test_loss"])
+
+    epochs_ = np.arange(1, len(train_loss)+1)
+
+    fig, ax = plt.subplots(1,2, figsize=figsize)
+
+    ax[0].plot(epochs_, train_acc,'b-', label='Training accuracy')
+    ax[0].plot(epochs_, test_acc,'r--', label='Test accuracy')
+
+    ax[0].legend()
+    ax[0].set_xlabel('Epoch')
+    ax[0].set_ylabel('Accuracy %')
+
+    ax[1].plot(epochs_, train_loss,'b-', label='Training loss')
+    ax[1].plot(epochs_, test_loss,'r--', label='Test loss')
+
+    ax[1].legend()
+    ax[1].set_xlabel('Epoch')
+    ax[1].set_ylabel('Loss')
+
+    plt.savefig('test_plot.pdf')
+    
+    wandb.log({"chart": plt})
+    
+    plt.show()
+
+    data = [[x, y] for (x, y) in zip(epochs_, train_acc)]
+    table = wandb.Table(data=data, columns = ["Epochs", "Training accuracy"])
+
+    
 
 def get_transforms(rotation_deg:float, use_augm:bool=True):
     if use_augm:
@@ -109,35 +152,6 @@ def main(config) -> None:
     print(f"Training is running on: {device}")
 
     torch.manual_seed(seed)
-
-
-    # # Standard preprocessing for ResNet and VGG
-    # # https://pytorch.org/hub/pytorch_vision_resnet/
-    # # https://pytorch.org/hub/pytorch_vision_vgg/
-
-    # # Maybe add some blurring
-    # train_transformation = transforms.Compose(
-    #     [
-    #         transforms.Resize(256),
-    #         transforms.CenterCrop(224),
-    #         transforms.RandomHorizontalFlip(),
-    #         transforms.RandomVerticalFlip(),
-    #         transforms.RandomGrayscale(p=0.1),
-    #         transforms.RandomRotation(rotation_deg),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    #     ]
-    # )
-
-    # # Need not have the same transformations as for training, other than resizing and tensorizing. Maybe normalize with train data
-    # test_transformation = transforms.Compose(
-    #     [
-    #         transforms.Resize(256),
-    #         transforms.CenterCrop(224),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    #     ]
-    # )
     
     train_transformation, test_transformation = get_transforms(rotation_deg,use_augm)
 
@@ -260,7 +274,8 @@ def main(config) -> None:
     
 
     # Plot training and test accuracies
-    generate_plots(out_dict)
+    info = [model_name, optim_name, lr]
+    generate_plots(out_dict, info)
 
     # After training is done, we should use the test images or another,
     # never seen test image set and generate a confusion matrix, as well as the images that are classified wrong.
