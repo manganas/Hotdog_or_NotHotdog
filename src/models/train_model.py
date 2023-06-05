@@ -25,6 +25,9 @@ wandb.init()
 log = logging.getLogger(__name__)
 
 
+def generate_plots(out_dict: dict):
+    pass
+
 def get_transforms(rotation_deg:float, use_augm:bool=True):
     if use_augm:
         # Standard preprocessing for ResNet and VGG
@@ -254,6 +257,10 @@ def main(config) -> None:
             'testing_save_dict.pkl', "wb"
         ) as handle:
             pickle.dump(out_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
+
+    # Plot training and test accuracies
+    generate_plots(out_dict)
 
     # After training is done, we should use the test images or another,
     # never seen test image set and generate a confusion matrix, as well as the images that are classified wrong.
