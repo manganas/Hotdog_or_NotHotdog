@@ -2,14 +2,69 @@ from torch import nn, Tensor
 import torch
 import torch.nn.functional as F
 
+class BottleNeckResNetBlock(nn.Module):
+    def __init__(self, n_features:int, n_bottleneck:int, kernel_size:int=3)->None:
+        '''
+        Creates a bottlenck resnet block
+        n_features are the number of channels coming into the block
+        n_bottleneck are the reduced channels
+        n_bottleneck < n_features: bottleneck
+        n_bottleneck > n_features: inverse bottleneck
+        '''
+        
+
+        self.bottleneck__block = nn.Sequential(
+            nn.Conv2d(n_features, n_bottleneck, 1, padding='same' ),
+            nn.ReLU(),
+            nn.Conv2d(n_bottleneck, n_bottleneck, kernel_size, padding='same'),
+            nn.ReLU(),
+            nn.Conv2d(n_bottleneck, n_features, 1, padding='same')
+        )
+        
+        
+    def forward(self, x):
+        
+        x_conv = self.bottleneck__block(x)
+        
+        out = F.relu(x_conv + x)
+        
+        return out
+
+
+class ResNetBlock(nn.Module):
+    '''
+    Simple ResNet block that can be used for building models
+    '''
+    def __init__(self, n_features:int, kernel_size: int=3):
+        super(ResNetBlock, self).__init__()
+                
+        self.conv_block = nn.Sequential(
+            nn.Conv2d(n_features, n_features, kernel_size, padding='same' ),
+            nn.ReLU(),
+            nn.Conv2d(n_features, n_features, kernel_size, padding='same')
+        )
+        
+        
+    def forward(self, x):
+        
+        x_conv = self.conv_block(x)
+        
+        out = F.relu(x_conv + x)
+        
+        return out
 
 class CustomModelIma(nn.Module):
     '''
     Create a model from scratch
     '''
-    def __init__(self, bn:bool=True)->None:
+    def __init__(self,in_channels:int, n_classes:int, height:int, width:int,  bn:bool=True)->None:
         super(CustomModelIma, self).__init__()
         self.bn = bn
+
+        self.convolution_part = nn.Sequential(
+            nn.Conv2d(in_channels, 33, 3, padding='same'),
+
+        )
 
     
     def BN_layer(self, n_features:int):
