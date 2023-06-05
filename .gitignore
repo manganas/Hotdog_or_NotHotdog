@@ -1,6 +1,7 @@
 /data/
 /outputs/
 /wandb/
+/logs/
 .vscode
 
 # Byte-compiled / optimized / DLL files
