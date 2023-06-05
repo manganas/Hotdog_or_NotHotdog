@@ -25,6 +25,50 @@ wandb.init()
 log = logging.getLogger(__name__)
 
 
+def get_transforms(use_augm:bool=True):
+    if use_augm:
+        # Standard preprocessing for ResNet and VGG
+        # https://pytorch.org/hub/pytorch_vision_resnet/
+        # https://pytorch.org/hub/pytorch_vision_vgg/
+
+        # Maybe add some blurring
+        train_transformation = transforms.Compose(
+            [
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.RandomHorizontalFlip(),
+                transforms.RandomVerticalFlip(),
+                transforms.RandomGrayscale(p=0.1),
+                transforms.RandomRotation(rotation_deg),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ]
+        )
+
+        # Need not have the same transformations as for training, other than resizing and tensorizing. Maybe normalize with train data
+        test_transformation = transforms.Compose(
+            [
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ]
+        )
+
+        return train_transformation, test_transformation
+
+    train_transformation = transforms.Compose(
+            [
+                transforms.Resize(256),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+            ]
+        )
+    
+    return train_transformation, train_transformation
+
+
 def loss_fun(output, target):
     return F.nll_loss(output, target)
 
@@ -40,6 +84,7 @@ def main(config) -> None:
     # Transformation parameters
     # img_size = hparams["img_size"]
     rotation_deg = hparams["rotation_deg"]
+    use_augm = hparams['augmentation']
 
     # Model and optimizer
     model_name = hparams["model"].lower().strip()
@@ -63,33 +108,35 @@ def main(config) -> None:
     torch.manual_seed(seed)
 
 
-    # Standard preprocessing for ResNet and VGG
-    # https://pytorch.org/hub/pytorch_vision_resnet/
-    # https://pytorch.org/hub/pytorch_vision_vgg/
+    # # Standard preprocessing for ResNet and VGG
+    # # https://pytorch.org/hub/pytorch_vision_resnet/
+    # # https://pytorch.org/hub/pytorch_vision_vgg/
 
-    # Maybe add some blurring
-    train_transformation = transforms.Compose(
-        [
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomVerticalFlip(),
-            transforms.RandomGrayscale(p=0.1),
-            transforms.RandomRotation(rotation_deg),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ]
-    )
+    # # Maybe add some blurring
+    # train_transformation = transforms.Compose(
+    #     [
+    #         transforms.Resize(256),
+    #         transforms.CenterCrop(224),
+    #         transforms.RandomHorizontalFlip(),
+    #         transforms.RandomVerticalFlip(),
+    #         transforms.RandomGrayscale(p=0.1),
+    #         transforms.RandomRotation(rotation_deg),
+    #         transforms.ToTensor(),
+    #         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    #     ]
+    # )
 
-    # Need not have the same transformations as for training, other than resizing and tensorizing. Maybe normalize with train data
-    test_transformation = transforms.Compose(
-        [
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ]
-    )
+    # # Need not have the same transformations as for training, other than resizing and tensorizing. Maybe normalize with train data
+    # test_transformation = transforms.Compose(
+    #     [
+    #         transforms.Resize(256),
+    #         transforms.CenterCrop(224),
+    #         transforms.ToTensor(),
+    #         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    #     ]
+    # )
+    
+    train_transformation, test_transformation = get_transforms(use_augm)
 
     # Create the datasets and dataloaders
     trainset = HotDogDataset(raw_data_path, train=True, transform=train_transformation)

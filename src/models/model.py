@@ -3,6 +3,22 @@ import torch
 import torch.nn.functional as F
 
 
+class CustomModelIma(nn.Module):
+    '''
+    Create a model from scratch
+    '''
+    def __init__(self, bn:bool=True)->None:
+        super(CustomModelIma, self).__init__()
+        self.bn = bn
+
+    
+    def BN_layer(self, n_features:int):
+        return nn.BatchNorm2d(n_features) if self.bn else nn.Identity()
+
+
+    def forward(self, x: Tensor)-> Tensor:
+        return x
+
 class CNN_model(nn.Module):
     """
     Initial approach to a CNN for classification.
