@@ -18,4 +18,4 @@ seed: 7
 save_after_n_epochs: 10
 augmentation: True
 scheduler_gamma: 0.5
-scheduler_milestones: [5,10,15,20,25,30,35]
+scheduler_milestones: [10,20,25,30,35]
