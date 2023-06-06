@@ -180,6 +180,8 @@ def main(config) -> None:
             model.parameters(), lr=lr, weight_decay=weight_decay
         )
 
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10,20,30], gamma=0.1)
+
     print(model)
     print(optimizer)
 
@@ -212,6 +214,9 @@ def main(config) -> None:
             # Compute how many were correctly classified
             predicted = output.argmax(1)
             train_correct += (target == predicted).sum().cpu().item()
+
+        #LR Decay
+        scheduler.step()
         # Comput the test accuracy
         test_loss = []
         test_correct = 0
