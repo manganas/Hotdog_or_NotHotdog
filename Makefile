@@ -29,7 +29,7 @@ requirements: test_environment
 data: requirements
 	$(PYTHON_INTERPRETER) src/data/dataset.py
 
-train: data
+train:
 	$(PYTHON_INTERPRETER) src/models/train_model.py 
 
 ## Delete all compiled Python files
