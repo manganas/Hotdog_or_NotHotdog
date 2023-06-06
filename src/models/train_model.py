@@ -20,9 +20,6 @@ from omegaconf import OmegaConf
 
 import wandb
 
-# Initialize wandb
-wandb.init()
-
 # Initialize the logger
 log = logging.getLogger(__name__)
 
@@ -126,6 +123,9 @@ def main(config) -> None:
     hparams = config.experiment
     seed = hparams["seed"]
 
+    # Initialize wandb
+    wandb.init(project="hotdog-final", entity="dl_cv_group7", config=config)
+
     # Transformation parameters
     # img_size = hparams["img_size"]
     rotation_deg = hparams["rotation_deg"]
@@ -154,36 +154,6 @@ def main(config) -> None:
 
     scheduler_gamma = hparams["scheduler_gamma"]
     scheduler_milestones = hparams["scheduler_milestones"]
-
-    
-
-    # # Standard preprocessing for ResNet and VGG
-    # # https://pytorch.org/hub/pytorch_vision_resnet/
-    # # https://pytorch.org/hub/pytorch_vision_vgg/
-
-    # # Maybe add some blurring
-    # train_transformation = transforms.Compose(
-    #     [
-    #         transforms.Resize(256),
-    #         transforms.CenterCrop(224),
-    #         transforms.RandomHorizontalFlip(),
-    #         transforms.RandomVerticalFlip(),
-    #         transforms.RandomGrayscale(p=0.1),
-    #         transforms.RandomRotation(rotation_deg),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    #     ]
-    # )
-
-    # # Need not have the same transformations as for training, other than resizing and tensorizing. Maybe normalize with train data
-    # test_transformation = transforms.Compose(
-    #     [
-    #         transforms.Resize(256),
-    #         transforms.CenterCrop(224),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    #     ]
-    # )
     
     train_transformation, test_transformation = get_transforms(rotation_deg,use_augm)
 
@@ -204,6 +174,8 @@ def main(config) -> None:
         model = VGG_19_model()
     elif model_name == "resnet":
         model = ResNet_model()
+    elif model_name == "custom":
+        model = CNN_model(in_channels, n_classes, img_size, img_size)
     else:
         model = CustomModelIma(in_channels, n_classes, img_size, img_size, bn=False)
 
@@ -219,8 +191,8 @@ def main(config) -> None:
         optimizer = torch.optim.SGD(
             model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
         )
-    # elif optim_name=='adam':
-    #     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    elif optim_name=='adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     else:
         optimizer = torch.optim.Adam(
             model.parameters(), lr=lr, weight_decay=weight_decay

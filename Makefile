@@ -30,7 +30,7 @@ data: requirements
 	$(PYTHON_INTERPRETER) src/data/dataset.py
 
 train:
-	$(PYTHON_INTERPRETER) src/models/train_model.py 
+	CUDA_VISIBLE_DEVICES=1 $(PYTHON_INTERPRETER) src/models/train_model.py 
 
 ## Delete all compiled Python files
 clean:

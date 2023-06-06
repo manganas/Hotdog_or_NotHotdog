@@ -174,16 +174,16 @@ class CNN_model(nn.Module):
         return out.shape[1] * out.shape[2] * out.shape[3]
     
     
-class CNN_model3(nn.Module):
+class CNN_model(nn.Module):
     """
     Initial approach to a CNN for classification.
     """
 
     def __init__(self, in_channels: int, n_classes: int, h: int, w: int) -> None:
-        super(CNN_model3, self).__init__()
+        super(CNN_model, self).__init__()
 
         kernel_size = 3
-        dropout_rate = 0.4  # Dropout rate can be tuned as per requirement
+        dropout_rate = 0.3  # Dropout rate can be tuned as per requirement
 
         self.convolution_part = nn.Sequential(
             nn.Conv2d(in_channels, 16, kernel_size, padding="same"),
@@ -199,6 +199,11 @@ class CNN_model3(nn.Module):
             nn.LeakyReLU(),
             nn.BatchNorm2d(64),
             nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(64, 128, kernel_size, padding="same"),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(128, 256, kernel_size, padding="same"),
+            nn.LeakyReLU(),
             
             #nn.Dropout(dropout_rate)  # Adding dropout after conv layers
         )
@@ -214,7 +219,7 @@ class CNN_model3(nn.Module):
             nn.LeakyReLU(),
             nn.Dropout(dropout_rate),  # Adding dropout in between fully connected layers
             nn.Linear(128, n_classes),
-            #nn.LogSoftmax(dim=1)
+            nn.LogSoftmax(dim=1)
         )
     ## No LogSoftmax or Sigmoid, cause i use crossentropy   
     def forward(self, x: Tensor) -> Tensor:
