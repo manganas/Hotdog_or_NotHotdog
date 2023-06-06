@@ -104,6 +104,7 @@ def main():
 
     # Plot accuracies for test set together for comparison
     plot_comp_experiments(dict_dict, 'acc', SAVE_DIR, test=True)
+
     
 
 if __name__=='__main__':

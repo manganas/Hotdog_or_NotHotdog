@@ -11,13 +11,16 @@ class BottleNeckResNetBlock(nn.Module):
         n_bottleneck < n_features: bottleneck
         n_bottleneck > n_features: inverse bottleneck
         '''
-        
+        super(BottleNeckResNetBlock, self).__init__()
+        p = 0.1
 
         self.bottleneck__block = nn.Sequential(
             nn.Conv2d(n_features, n_bottleneck, 1, padding='same' ),
             nn.ReLU(),
+            nn.Dropout2d(p),
             nn.Conv2d(n_bottleneck, n_bottleneck, kernel_size, padding='same'),
             nn.ReLU(),
+            nn.Dropout2d(p),
             nn.Conv2d(n_bottleneck, n_features, 1, padding='same')
         )
         
@@ -62,16 +65,61 @@ class CustomModelIma(nn.Module):
         self.bn = bn
 
         self.convolution_part = nn.Sequential(
-            nn.Conv2d(in_channels, 33, 3, padding='same'),
-
+            nn.Conv2d(in_channels, 16, 3, padding='same'),
+            nn.LeakyReLU(),
+            nn.Conv2d(16, 16, 3, padding='same'),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2, stride=2),
+            self.BN_layer_2d(16),
+            nn.Conv2d(16, 32, 3, padding='same'),
+            nn.LeakyReLU(),
+            nn.Conv2d(32, 32, 3, padding='same'),
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2, stride=2),
+            self.BN_layer_2d(32),
+            nn.Conv2d(32, 64, 3, padding='same'),
+            nn.LeakyReLU(),
+            nn.Conv2d(64, 64, 3, padding='same'),
+            nn.LeakyReLU()
         )
 
-    
-    def BN_layer(self, n_features:int):
-        return nn.BatchNorm2d(n_features) if self.bn else nn.Identity()
+        self.residual_part = nn.Sequential(
+            BottleNeckResNetBlock(32, 64, 3),
+            self.BN_layer_2d(32),
+            BottleNeckResNetBlock(32, 64, 3),
+            self.BN_layer_2d(32),
+            BottleNeckResNetBlock(32, 16, 3),
+            self.BN_layer_2d(32)
+        )
 
+        x = torch.rand(1,3,height, width)
+        in_shape = self.get_output_conv_shape(x)
+
+        self.fully_connected_part = nn.Sequential(
+            nn.Linear(in_shape, 4096),
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.Linear(4096, 2048),
+            nn.ReLU(),
+            nn.Linear(2048, n_classes),
+            nn.LogSoftmax(dim=1)
+        )
+
+
+    
+    def BN_layer_2d(self, n_features:int):
+        return nn.BatchNorm2d(n_features) if self.bn else nn.Identity()
+    
+    def get_output_conv_shape(self, x: Tensor) -> int:
+        x = self.convolution_part(x)
+        # x = self.residual_part(x)
+        return x.shape[1] * x.shape[2] * x.shape[3]
 
     def forward(self, x: Tensor)-> Tensor:
+        x = self.convolution_part(x)
+        # x = self.residual_part(x)
+        x = x.view(x.size(0), -1)
+        x = self.fully_connected_part(x)
         return x
 
 class CNN_model(nn.Module):
@@ -231,13 +279,14 @@ class ResNet_model(nn.Module):
 
 
 def main():
-    # model = ResNet_model()
-    # print(model.resnet)
+    h = 224
+    w = 224
+    model = CustomModelIma(3, 2, h, w, bn=True)
+    
+    x = torch.rand(1, 3, h, w)
+    print(model(x))
 
-    # x = torch.rand(1, 3, 224, 224)
-    # print(model(x))
-
-    pass
+    
 
 
 if __name__ == "__main__":
