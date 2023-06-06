@@ -214,7 +214,7 @@ class CNN_model3(nn.Module):
             nn.LeakyReLU(),
             nn.Dropout(dropout_rate),  # Adding dropout in between fully connected layers
             nn.Linear(128, n_classes),
-            #nn.LogSoftmax(dim=1)
+            nn.LogSoftmax(dim=1)
         )
     ## No LogSoftmax or Sigmoid, cause i use crossentropy   
     def forward(self, x: Tensor) -> Tensor:
@@ -250,8 +250,11 @@ class VGG_19_model(nn.Module):
         from torchvision.models.vgg import vgg19_bn, VGG19_BN_Weights
 
         # Initialize model with the best available weights
-        weights = VGG19_BN_Weights.DEFAULT
-        model = vgg19_bn(weights=weights)
+        if use_pretrained:
+            weights = VGG19_BN_Weights.DEFAULT
+            model = vgg19_bn(weights=weights)
+        else:
+            model = vgg19_bn()
 
         children = list(model.children())
 
@@ -261,15 +264,16 @@ class VGG_19_model(nn.Module):
         # per 3. If I remove the last linear layer (4096->1000), then I have [-1]. Next layer is -4
         self.fully_connected = nn.Sequential(*children[2])
 
-        # Freeze the pretrained layers
-        for param in self.feature_extractor.parameters():
-            param.requires_grad = False
+        if use_pretrained:
+            # Freeze the pretrained layers
+            for param in self.feature_extractor.parameters():
+                param.requires_grad = False
 
-        for param in self.adaptive_average_pooling.parameters():
-            param.requires_grad = False
+            for param in self.adaptive_average_pooling.parameters():
+                param.requires_grad = False
 
-        for param in self.fully_connected.parameters():
-            param.requires_grad = False
+            for param in self.fully_connected.parameters():
+                param.requires_grad = False
 
         # The last layer of VGG19_bn has output 1000 features. Added a layer from 1000 to 2 features, since 2 classes
         self.custom_fc_layer = nn.Sequential(
@@ -296,7 +300,7 @@ class ResNet_model(nn.Module):
     ResNet based pretrained model.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, use_pretrained:bool=True) -> None:
         super(ResNet_model, self).__init__()
 
         # From https://pytorch.org/hub/pytorch_vision_resnet/
@@ -305,26 +309,30 @@ class ResNet_model(nn.Module):
         from torchvision.models.resnet import resnet152, ResNet152_Weights
 
         # Initialize model with the best available weights
-        weights = ResNet152_Weights.DEFAULT
-        model = resnet152(weights=weights)
+        if use_pretrained:
+            weights = ResNet152_Weights.DEFAULT
+            model = resnet152(weights=weights)
+        else:
+            model = resnet152()
 
         children = list(model.children())
 
         self.resnet = nn.Sequential(*children)[:-1]
         self.fully_connected = nn.Sequential(*children)[-1]
 
-        # Freeze the pretrained layers
-        for param in self.resnet.parameters():
-            param.requires_grad = False
+        if use_pretrained:
+            # Freeze the pretrained layers
+            for param in self.resnet.parameters():
+                param.requires_grad = False
 
-        for param in self.fully_connected.parameters():
-            param.requires_grad = False
+            for param in self.fully_connected.parameters():
+                param.requires_grad = False
 
-        # The last layer of ResNet152 has 1000 features. added a layer to 2 features, since 2 classes
-        self.custom_fc_layer = nn.Sequential(
-            nn.ReLU(),
-            nn.Linear(in_features=1000, out_features=2, bias=True), nn.LogSoftmax(dim=1)
-        )
+            # The last layer of ResNet152 has 1000 features. added a layer to 2 features, since 2 classes
+            self.custom_fc_layer = nn.Sequential(
+                nn.ReLU(),
+                nn.Linear(in_features=1000, out_features=2, bias=True), nn.LogSoftmax(dim=1)
+            )
 
     def forward(self, x):
         x = self.resnet(x)
@@ -339,12 +347,13 @@ class ResNet_model(nn.Module):
 
 
 def main():
-    h = 224
-    w = 224
-    model = CustomModelIma(3, 2, h, w, bn=True)
+    # h = 224
+    # w = 224
+    # model = CustomModelIma(3, 2, h, w, bn=True)
     
-    x = torch.rand(1, 3, h, w)
-    print(model(x))
+    # x = torch.rand(1, 3, h, w)
+    # print(model(x))
+    pass
 
     
 

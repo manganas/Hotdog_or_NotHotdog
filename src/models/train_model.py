@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from typing import Tuple
 
 from src.data.dataset import HotDogDataset
-from src.models.model import CNN_model, VGG_19_model, ResNet_model, CustomModelIma
+from src.models.model import VGG_19_model, ResNet_model, CNN_model3
 
 from tqdm import tqdm
 import numpy as np
@@ -157,35 +157,7 @@ def main(config) -> None:
     scheduler_gamma = hparams["scheduler_gamma"]
     scheduler_milestones = hparams["scheduler_milestones"]
 
-    
 
-    # # Standard preprocessing for ResNet and VGG
-    # # https://pytorch.org/hub/pytorch_vision_resnet/
-    # # https://pytorch.org/hub/pytorch_vision_vgg/
-
-    # # Maybe add some blurring
-    # train_transformation = transforms.Compose(
-    #     [
-    #         transforms.Resize(256),
-    #         transforms.CenterCrop(224),
-    #         transforms.RandomHorizontalFlip(),
-    #         transforms.RandomVerticalFlip(),
-    #         transforms.RandomGrayscale(p=0.1),
-    #         transforms.RandomRotation(rotation_deg),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    #     ]
-    # )
-
-    # # Need not have the same transformations as for training, other than resizing and tensorizing. Maybe normalize with train data
-    # test_transformation = transforms.Compose(
-    #     [
-    #         transforms.Resize(256),
-    #         transforms.CenterCrop(224),
-    #         transforms.ToTensor(),
-    #         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    #     ]
-    # )
     
     train_transformation, test_transformation = get_transforms(rotation_deg,use_augm)
 
@@ -210,11 +182,13 @@ def main(config) -> None:
 
     # Improve implementation later!
     if model_name == "vgg":
-        model = VGG_19_model()
+        use_pretrained = hparams['use_pretrained']
+        model = VGG_19_model(use_pretrained)
     elif model_name == "resnet":
-        model = ResNet_model()
+        use_pretrained = hparams['use_pretrained']
+        model = ResNet_model(use_pretrained)
     else:
-        model = CustomModelIma(in_channels, n_classes, img_size, img_size, bn=False)
+        model = CNN_model3(in_channels, n_classes, img_size, img_size)
 
     # Magic
     wandb.watch(model, log_freq=50)
@@ -316,9 +290,6 @@ def main(config) -> None:
             pickle.dump(out_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
 
-    # Plot training and test accuracies
-    info = [model_name, optim_name, lr]
-    # generate_plots(out_dict, info)
 
     # After training is done, we should use the test images or another,
     # never seen test image set and generate a confusion matrix, as well as the images that are classified wrong.
