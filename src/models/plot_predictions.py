@@ -100,7 +100,7 @@ def main():
     # Now plot these indices
 
     fig, ax = plt.subplots(1,n_to_plot)
-    fig.subplots_adjust(hspace=0.5)
+    fig.tight_layout()
     for i in range(len(idx)):
         img_ = bad_images_tsnr[i].squeeze()
         img_ = torch.permute(img_, (1,2,0)).cpu().numpy()
@@ -110,6 +110,8 @@ def main():
 
         a = bad_labels[i].cpu().numpy()
         bad_pred = testset_to_be_split.id_to_label[bad_labels[i].cpu().numpy()[0]]
+
+        # It is implied, just to be explicit here. We have binary classification.
         true_pred = testset_to_be_split.id_to_label[true_labels[i].cpu().numpy()[0]]
         # bad_pred = testset_to_be_split.labels[bad_labels[i].cpu().numpy()]
         # true_pred = testset_to_be_split.labels[true_labels[i].cpu().numpy()]
