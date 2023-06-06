@@ -1,6 +1,8 @@
 import torch
 from torch.utils.data import DataLoader
 from torch import nn, Tensor
+from torch.utils.data import random_split
+
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
@@ -190,9 +192,16 @@ def main(config) -> None:
     # Create the datasets and dataloaders
     trainset = HotDogDataset(raw_data_path, train=True, transform=train_transformation)
     train_loader = DataLoader(trainset, batch_size=batch_size, shuffle=True)
+    
+    testset_to_be_split = HotDogDataset(raw_data_path, train=False, transform=test_transformation)
+    
+    # To take the rest of the dataset later
+    generator1 = torch.Generator().manual_seed(seed)
+    valset, _ =  random_split(testset_to_be_split, [0.2, 0.8], generator=generator1)
 
-    testset = HotDogDataset(raw_data_path, train=False, transform=test_transformation)
-    test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
+    val_loader = DataLoader(valset, batch_size=batch_size, shuffle=False)
+    
+
 
     # Define model
     in_channels = 3  # RGB image
@@ -268,7 +277,7 @@ def main(config) -> None:
         test_loss = []
         test_correct = 0
         model.eval()
-        for data, target in tqdm(test_loader, desc="Test", leave=None):
+        for data, target in tqdm(val_loader, desc="Test", leave=None):
             data, target = data.to(device), target.to(device)
             with torch.no_grad():
                 output = model(data)
@@ -276,7 +285,7 @@ def main(config) -> None:
             predicted = output.argmax(1)
             test_correct += (target == predicted).sum().cpu().item()
         out_dict["train_acc"].append(train_correct / len(trainset))
-        out_dict["test_acc"].append(test_correct / len(testset))
+        out_dict["test_acc"].append(test_correct / len(valset))
         out_dict["train_loss"].append(np.mean(train_loss))
         out_dict["test_loss"].append(np.mean(test_loss))
         print(
