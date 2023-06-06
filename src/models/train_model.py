@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 from typing import Tuple
 
 from src.data.dataset import HotDogDataset
-from src.models.model import CNN_model, VGG_19_model, ResNet_model
+from src.models.model import CNN_model, VGG_19_model, ResNet_model, CustomModelIma
 
 from tqdm import tqdm
 import numpy as np
@@ -62,12 +62,12 @@ def generate_plots(out_dict: dict, info:Tuple,  figsize:Tuple[int]=(16,8))-> Non
 
     plt.savefig('test_plot.pdf')
     
-    wandb.log({"chart": plt})
+    # wandb.log({"chart": plt})
     
     plt.show()
 
     data = [[x, y] for (x, y) in zip(epochs_, train_acc)]
-    table = wandb.Table(data=data, columns = ["Epochs", "Training accuracy"])
+    # table = wandb.Table(data=data, columns = ["Epochs", "Training accuracy"])
 
     
 
@@ -117,7 +117,6 @@ def get_transforms(rotation_deg:float, use_augm:bool=True):
 
 def loss_fun(output, target):
     return F.nll_loss(output, target)
-
 
 @hydra.main(config_path="../conf", config_name="default_config.yaml")
 def main(config) -> None:
@@ -173,7 +172,7 @@ def main(config) -> None:
     elif model_name == "resnet":
         model = ResNet_model()
     else:
-        model = CNN_model(in_channels, n_classes, img_size, img_size)
+        model = CustomModelIma(in_channels, n_classes, img_size, img_size, bn=False)
 
     # Magic
     wandb.watch(model, log_freq=50)
@@ -256,26 +255,22 @@ def main(config) -> None:
 
         # Save the model weights
         if epoch % save_per_n_epochs == 0:
-            # save weights
-            # torch.save(model, os.join(saved_models_path,model_name+'.pt' ))
-            # torch.save(
-            #     {"model": model.state_dict(), "optimizer": optimizer.state_dict()},
-            #     os.path.join(saved_models_path, model_name + "_" + optim_name + ".pt"),
-            # )
             torch.save(
-                {"model": model.state_dict(), "optimizer": optimizer.state_dict()},
+                {"model": model.state_dict(),
+                #  "optimizer": optimizer.state_dict()
+                 },
                 "testing_save_model.pt",
             )
 
         with open(
-            'testing_save_dict.pkl', "wb"
+            f'out_dict_{model_name}_{optim_name}_{lr}.pkl', "wb"
         ) as handle:
             pickle.dump(out_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
 
     # Plot training and test accuracies
     info = [model_name, optim_name, lr]
-    generate_plots(out_dict, info)
+    # generate_plots(out_dict, info)
 
     # After training is done, we should use the test images or another,
     # never seen test image set and generate a confusion matrix, as well as the images that are classified wrong.
