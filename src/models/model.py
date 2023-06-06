@@ -172,6 +172,66 @@ class CNN_model(nn.Module):
     def get_output_conv_shape(self, x: Tensor) -> int:
         out = self.convolution_part(x)
         return out.shape[1] * out.shape[2] * out.shape[3]
+    
+    
+class CNN_model3(nn.Module):
+    """
+    Initial approach to a CNN for classification.
+    """
+
+    def __init__(self, in_channels: int, n_classes: int, h: int, w: int) -> None:
+        super(CNN_model3, self).__init__()
+
+        kernel_size = 3
+        dropout_rate = 0.4  # Dropout rate can be tuned as per requirement
+
+        self.convolution_part = nn.Sequential(
+            nn.Conv2d(in_channels, 16, kernel_size, padding="same"),
+            nn.LeakyReLU(),
+            nn.Conv2d(16, 32, kernel_size, padding="same"),
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(32),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            nn.Conv2d(32, 64, kernel_size, padding="same"),
+            nn.LeakyReLU(),
+            nn.Conv2d(64, 64, kernel_size, padding="same"),
+            nn.LeakyReLU(),
+            nn.BatchNorm2d(64),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            
+            #nn.Dropout(dropout_rate)  # Adding dropout after conv layers
+        )
+
+        x = torch.rand(1, in_channels, h, w)
+        lin_in_dim = self.get_output_conv_shape(x)
+
+        self.fully_connected = nn.Sequential(
+            nn.Linear(lin_in_dim, 256),
+            nn.LeakyReLU(),
+            nn.Dropout(dropout_rate),  # Adding dropout in between fully connected layers
+            nn.Linear(256, 128),
+            nn.LeakyReLU(),
+            nn.Dropout(dropout_rate),  # Adding dropout in between fully connected layers
+            nn.Linear(128, n_classes),
+            #nn.LogSoftmax(dim=1)
+        )
+    ## No LogSoftmax or Sigmoid, cause i use crossentropy   
+    def forward(self, x: Tensor) -> Tensor:
+        x = self.convolution_part(x)
+        x = x.view(x.size(0), -1)
+        x = self.fully_connected(x)
+
+        assert len(x.shape) == 2, "Not an array type of tensor"
+        assert x.shape[-1] == 2, "Not two class probs returned"
+
+        return x
+
+    def get_output_conv_shape(self, x: Tensor) -> int:
+        out = self.convolution_part(x)
+        return out.shape[1] * out.shape[2] * out.shape[3]
+
+
 
 
 class VGG_19_model(nn.Module):
@@ -181,7 +241,7 @@ class VGG_19_model(nn.Module):
     should probably be changed to reflect that.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, use_pretrained:bool=True) -> None:
         super(VGG_19_model, self).__init__()
 
         # From https://pytorch.org/hub/pytorch_vision_vgg/

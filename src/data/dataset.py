@@ -15,6 +15,7 @@ from tqdm import tqdm
 import hydra
 
 
+
 class HotDogDataset(Dataset):
     def __init__(
         self, data_folder_path: str, train: bool = True, transform=None
