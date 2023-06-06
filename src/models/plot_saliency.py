@@ -13,6 +13,26 @@ from omegaconf import OmegaConf
 import numpy as np
 import matplotlib.pyplot as plt
 
+def save_saliency(saliency):
+    
+    img_sal = torch.permute(torch.from_numpy(saliency), (1,2,0)).cpu().numpy()
+    img_nomr = np.zeros_like(img_sal)
+
+    for i in range(3):
+        img_nomr[i,:,:] = 255/(img_sal[i,:,:].max()-img_sal[i,:,:].min())*(img_sal[i,:,:]-img_sal[i,:,:].min())
+        img_nomr[i, :, :] = img_nomr[i, :,:].astype(int)
+
+    fig = plt.figure()
+    plt.imshow(img_nomr)
+
+
+    plt.savefig('saliency.pdf')
+    plt.show()
+
+
+    
+
+
 def get_smooth_grad(image, model, n_samples=25, std_dev=0.1):
     """
     Computes the SmoothGrad saliency map of a given image and model.
@@ -133,7 +153,9 @@ def main(config):
 
     saliency_map = get_smooth_grad(image, model)
 
-    print(saliency_map.shape)
+    print(saliency_map.min(), saliency_map.max())
+
+    save_saliency(saliency_map)
 
 
 if __name__=='__main__':
