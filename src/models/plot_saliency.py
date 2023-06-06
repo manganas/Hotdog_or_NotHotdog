@@ -10,6 +10,8 @@ from src.models.model import VGG_19_model, ResNet_model, CNN_model3
 
 from omegaconf import OmegaConf
 
+import numpy as np
+import matplotlib.pyplot as plt
 
 def get_smooth_grad(image, model, n_samples=25, std_dev=0.1):
     """
@@ -33,44 +35,47 @@ def get_smooth_grad(image, model, n_samples=25, std_dev=0.1):
     # Make sure the model is in evaluation mode
     model.eval()
 
-    # Make sure the image requires gradient
-    # image = Variable(image.data, requires_grad=True)
-    image.to(device)
-    image.requires_grad=True
-    # image.requires_grad_()
-    
+    # Make sure the image requires gradient    
     # Keep a running total of gradients
     total_gradients = 0
+    
 
+    image = image.cpu().numpy()
+    total_gradients = np.zeros_like(image)
     # Create noisy samples and compute gradients
     for _ in range(n_samples):
         # Create a noisy image
-        noisy_image = image + std_dev * torch.randn(*image.shape).to(image.device)
-        
-        noisy_image.to(device)
+        # noisy_image = image + std_dev * torch.randn(*image.shape).to(image.device)
+        noisy_image = image + np.random.normal(0, std_dev, image.shape).astype(np.float32)
+        noisy_image = Variable(torch.from_numpy(noisy_image).to(device), requires_grad=True)
 
-
-        print(noisy_image.shape)
         # Forward pass through the model
-        # output = model(noisy_image)
-        output = model(image)
+        
+        output = model(noisy_image)
 
         # Get the index of the max log-probability
-        output_max_index = output.argmax()
+        index = np.argmax(output.data.cpu().numpy())
 
-        # Zero gradients everywhere
-        model.zero_grad()
+        one_hot = np.zeros((1, output.size()[-1]), dtype=np.float32)
+        one_hot[0][index] = 1
 
-        # Backward pass from the maximum output
-        output_max_index.backward()
+        one_hot = Variable(torch.from_numpy(one_hot).to(device), requires_grad=True)
 
-        # Add up the gradients
-        total_gradients += noisy_image.grad.data.abs()
+        one_hot = torch.sum(one_hot * output)
 
-    # Compute the saliency map as the average of the gradients
-    saliency_map = total_gradients / n_samples
+        if noisy_image.grad is not None:
+                noisy_image.grad.data.zero_()
 
-    return saliency_map
+        one_hot.backward()
+
+        grad = noisy_image.grad.data.cpu().numpy()
+
+        total_gradients += grad
+
+    avg_gradients = total_gradients[0, :, :, :] / n_samples
+
+    return avg_gradients
+
 
 def get_model(hparams):
     model_name = hparams['model'].lower().strip()
@@ -125,9 +130,10 @@ def main(config):
 
     image = torch.unsqueeze(image, 0)  # Adds a batch dimension
 
-    print(image.shape)
 
     saliency_map = get_smooth_grad(image, model)
+
+    print(saliency_map.shape)
 
 
 if __name__=='__main__':
