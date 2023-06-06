@@ -110,6 +110,10 @@ def main(config) -> None:
 
     torch.manual_seed(seed)
 
+    scheduler_gamma = hparams["scheduler_gamma"]
+    scheduler_milestones = hparams["scheduler_milestones"]
+
+    
 
     # # Standard preprocessing for ResNet and VGG
     # # https://pytorch.org/hub/pytorch_vision_resnet/
@@ -180,7 +184,8 @@ def main(config) -> None:
             model.parameters(), lr=lr, weight_decay=weight_decay
         )
 
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[10,20,30], gamma=0.1)
+
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=scheduler_milestones, gamma=scheduler_gamma)
 
     print(model)
     print(optimizer)

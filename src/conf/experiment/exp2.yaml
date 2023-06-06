@@ -17,3 +17,5 @@ n_epochs: 40
 seed: 7
 save_after_n_epochs: 10
 augmentation: True
+scheduler_gamma: 0.1
+scheduler_milestones: [10,20,30]
