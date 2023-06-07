@@ -22,9 +22,6 @@ from omegaconf import OmegaConf
 
 import wandb
 
-# Initialize wandb
-wandb.init()
-
 # Initialize the logger
 log = logging.getLogger(__name__)
 
@@ -128,6 +125,9 @@ def main(config) -> None:
     hparams = config.experiment
     seed = hparams["seed"]
 
+    # Initialize wandb
+    wandb.init(project="hotdog-final", entity="dl_cv_group7", config=config)
+
     # Transformation parameters
     # img_size = hparams["img_size"]
     rotation_deg = hparams["rotation_deg"]
@@ -156,8 +156,6 @@ def main(config) -> None:
 
     scheduler_gamma = hparams["scheduler_gamma"]
     scheduler_milestones = hparams["scheduler_milestones"]
-
-
     
     train_transformation, test_transformation = get_transforms(rotation_deg,use_augm)
 
@@ -187,6 +185,8 @@ def main(config) -> None:
     elif model_name == "resnet":
         use_pretrained = hparams['use_pretrained']
         model = ResNet_model(use_pretrained)
+    elif model_name == "custom":
+        model = CNN_model(in_channels, n_classes, img_size, img_size)
     else:
         model = CNN_model3(in_channels, n_classes, img_size, img_size)
 
@@ -202,8 +202,8 @@ def main(config) -> None:
         optimizer = torch.optim.SGD(
             model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay
         )
-    # elif optim_name=='adam':
-    #     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+    elif optim_name=='adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     else:
         optimizer = torch.optim.Adam(
             model.parameters(), lr=lr, weight_decay=weight_decay
