@@ -10,8 +10,10 @@ from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 import numpy as np
 
-from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve
+from sklearn.metrics import confusion_matrix, RocCurveDisplay
 import seaborn as sns
+
+
 
 def plot_confusion_matrix(y_true, y_pred, output_dir, exp_name, normalize=False):
     cm = confusion_matrix(y_true, y_pred)
@@ -19,12 +21,24 @@ def plot_confusion_matrix(y_true, y_pred, output_dir, exp_name, normalize=False)
         cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
         
     plt.figure(figsize=(10,7))
-    sns.heatmap(cm, annot=True, fmt=".3f", linewidths=.5, square = True, cmap = 'Blues');
-    plt.ylabel('Actual label');
-    plt.xlabel('Predicted label');
-    plt.title('Confusion Matrix', size = 15);
-    plt.savefig(f"{output_dir}/{exp_name}_confusion_matrix.pdf")
+    plt.tight_layout()
 
+    xticks = ['hotdog' if i==0 else 'not-hotdog' for i in range(0,2)]
+    sns.heatmap(cm, annot=True, fmt=".3f", linewidths=.5,
+                square = True, cmap = 'Blues',
+                xticklabels=xticks, yticklabels=xticks)
+    plt.ylabel('Actual label')
+    plt.xlabel('Predicted label')
+    plt.title('Confusion Matrix', size = 15)
+    plt.savefig(f"{output_dir}/{exp_name}_confusion_matrix.pdf")
+    plt.show
+
+    # ROC curve
+    RocCurveDisplay.from_predictions(y_true, y_pred)
+
+    plt.savefig(f"{output_dir}/{exp_name}_ROC_curve.pdf")
+
+    plt.show()
 
 
 def main():
@@ -69,6 +83,15 @@ def main():
     bad_probs = []
     bad_labels = []
     true_labels = []
+    
+    at_boundary_img_tsnr = []
+    at_boundary_prob_diffs = []
+    at_boundary_prediction = []
+    at_boundary_true = []
+    at_boundary_prediction_prob = []
+
+    all_predictions = np.array([])
+    all_true_labels = np.array([])
     # Get the predictions
     for _, (data, target) in tqdm( enumerate(test_loader), total=len(test_loader) ):
         
@@ -79,6 +102,9 @@ def main():
             output = model(data)
 
         predicted = output.argmax(1)
+
+        all_predictions = np.append(all_predictions, predicted.cpu().numpy())
+        all_true_labels = np.append(all_true_labels, target.cpu().numpy())
 
 
 
@@ -107,7 +133,68 @@ def main():
         true_labels.append(true_label)
         bad_probs.append(probs_of_wrong.max())
 
+        # Get predictions within 0.1 range from classif boundary 0.5
+        probs = torch.exp(output)
+        probs_diff = torch.abs( probs[:,0]-probs[:,1])
+        b = probs_diff <= 0.05
+        mask = torch.where(b, True, False)
+
+        b =(probs_diff  <= probs_diff.min() )
+        mask_p = torch.where(b, True, False)
+        
+
+        at_boundary_img_tsnr.append(data[mask_p])
+        at_boundary_prob_diffs.append(probs_diff[mask_p])
+        at_boundary_prediction.append(predicted[mask_p])
+        at_boundary_true.append(target[mask_p])
+        at_boundary_prediction_prob.append(output.max(1))
+        
+    #### Plot confusion matrix and roc curve(s)
+
+    plot_confusion_matrix(all_true_labels, all_predictions, '.', f'{model_name}', normalize=False)
     
+    #### Plot predictions at boundary
+    
+    n_to_plot = 4
+    idx = []
+    probs_sorted = sorted(at_boundary_prob_diffs, reverse=False)
+
+    for i in range(n_to_plot):
+        idx.append(at_boundary_prob_diffs.index(probs_sorted[i]))
+
+    # Now plot these indices
+
+    fig, ax = plt.subplots(1,n_to_plot, figsize=(12, 4))
+    fig.tight_layout()
+    for i in range(len(idx)):
+        img_ = at_boundary_img_tsnr[i].squeeze()
+        img_ = torch.permute(img_, (1,2,0)).cpu().numpy()
+
+        ax[i].imshow(img_)
+        ax[i].axis(False)
+
+        pred = testset_to_be_split.id_to_label[at_boundary_prediction[i].cpu().numpy()[0]]
+
+        # It is implied, just to be explicit here. We have binary classification.
+        true_pred = testset_to_be_split.id_to_label[at_boundary_true[i].cpu().numpy()[0]]
+
+        # pred_prob = at_boundary_prediction_prob[i]
+       
+        ax[i].set_title(f"Predicted: {pred}\nTrue: {true_pred}")
+
+    
+    # plt.subplots_adjust(wspace=0.1, hspace=0.3)
+    plt.savefig('plot_at_boundary.pdf')
+    plt.show()
+
+
+    return
+
+
+
+
+    #### Plot the most wrongly classified images
+
     n_to_plot = 4
     # Now pick the worst n images, based on the probs.
     idx = []

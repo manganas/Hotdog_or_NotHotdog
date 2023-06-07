@@ -9,7 +9,7 @@ rotation_deg: 40
 # Training params
 optimizer: 'Adam'
 momentum: 0.9 # For SGD optimizer
-model: 'custom' # can be custom, vgg and resnet
+model: 'vgg' # can be custom, vgg and resnet
 keep_n: 8
 batch_size: 64
 lr: 0.0001

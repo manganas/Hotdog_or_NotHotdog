@@ -214,7 +214,7 @@ class VGG_19_model(nn.Module):
         self.adaptive_average_pooling = children[1]
 
         # per 3. If I remove the last linear layer (4096->1000), then I have [-1]. Next layer is -4
-        self.fully_connected = nn.Sequential(*children[2])
+        self.fully_connected = nn.Sequential(*children[2])[:-1]
 
         if use_pretrained:
             # Freeze the pretrained layers
@@ -229,8 +229,7 @@ class VGG_19_model(nn.Module):
 
         # The last layer of VGG19_bn has output 1000 features. Added a layer from 1000 to 2 features, since 2 classes
         self.custom_fc_layer = nn.Sequential(
-            nn.ReLU(),
-            nn.Linear(in_features=1000, out_features=2, bias=True), nn.LogSoftmax(dim=1)
+            nn.Linear(in_features=4096, out_features=2, bias=True), nn.LogSoftmax(dim=1)
         )
 
     def forward(self, x):
@@ -301,10 +300,9 @@ class ResNet_model(nn.Module):
 def main():
     # h = 224
     # w = 224
-    # model = CustomModelIma(3, 2, h, w, bn=True)
+    # model = VGG_19_model(use_pretrained=True)
     
-    # x = torch.rand(1, 3, h, w)
-    # print(model(x))
+    # print(model)
     pass
 
     

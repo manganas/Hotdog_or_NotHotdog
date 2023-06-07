@@ -126,7 +126,7 @@ def main(config) -> None:
     seed = hparams["seed"]
 
     # Initialize wandb
-    wandb.init(project="hotdog-final", entity="dl_cv_group7", config=config)
+    wandb.init(project="hotdog-final-final", entity="dl_cv_group7", config=config)
 
     # Transformation parameters
     # img_size = hparams["img_size"]
