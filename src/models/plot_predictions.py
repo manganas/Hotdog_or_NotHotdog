@@ -147,7 +147,10 @@ def main():
         at_boundary_prob_diffs.append(probs_diff[mask_p])
         at_boundary_prediction.append(predicted[mask_p])
         at_boundary_true.append(target[mask_p])
-        at_boundary_prediction_prob.append(output.max(1))
+
+        pred_probs_, _ = output.max(1)
+
+        at_boundary_prediction_prob.append(torch.exp( pred_probs_[mask_p]))
         
     #### Plot confusion matrix and roc curve(s)
 
@@ -158,6 +161,8 @@ def main():
     n_to_plot = 4
     idx = []
     probs_sorted = sorted(at_boundary_prob_diffs, reverse=False)
+
+
 
     for i in range(n_to_plot):
         idx.append(at_boundary_prob_diffs.index(probs_sorted[i]))
@@ -178,17 +183,15 @@ def main():
         # It is implied, just to be explicit here. We have binary classification.
         true_pred = testset_to_be_split.id_to_label[at_boundary_true[i].cpu().numpy()[0]]
 
-        # pred_prob = at_boundary_prediction_prob[i]
+        pred_prob = at_boundary_prediction_prob[i].cpu().numpy().item()
        
-        ax[i].set_title(f"Predicted: {pred}\nTrue: {true_pred}")
+        ax[i].set_title(f"Predicted: {pred}: {np.round(pred_prob,3)}\nTrue: {true_pred}")
 
     
     # plt.subplots_adjust(wspace=0.1, hspace=0.3)
     plt.savefig('plot_at_boundary.pdf')
     plt.show()
 
-
-    return
 
 
 
