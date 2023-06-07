@@ -10,6 +10,23 @@ from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 import numpy as np
 
+from sklearn.metrics import confusion_matrix, roc_auc_score, roc_curve
+import seaborn as sns
+
+def plot_confusion_matrix(y_true, y_pred, output_dir, exp_name, normalize=False):
+    cm = confusion_matrix(y_true, y_pred)
+    if normalize:
+        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+        
+    plt.figure(figsize=(10,7))
+    sns.heatmap(cm, annot=True, fmt=".3f", linewidths=.5, square = True, cmap = 'Blues');
+    plt.ylabel('Actual label');
+    plt.xlabel('Predicted label');
+    plt.title('Confusion Matrix', size = 15);
+    plt.savefig(f"{output_dir}/{exp_name}_confusion_matrix.pdf")
+
+
+
 def main():
     
     ### Hardcoded constants!!!! #####
