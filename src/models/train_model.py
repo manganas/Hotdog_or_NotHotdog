@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from typing import Tuple
 
 from src.data.dataset import HotDogDataset
-from src.models.model import VGG_19_model, ResNet_model, CNN_model3
+from src.models.model import VGG_19_model, ResNet_model, CNN_model
 
 from tqdm import tqdm
 import numpy as np
@@ -167,7 +167,7 @@ def main(config) -> None:
     
     # To take the rest of the dataset later
     generator1 = torch.Generator().manual_seed(seed)
-    valset, _ =  random_split(testset_to_be_split, [0.2, 0.8], generator=generator1)
+    valset, _ =  random_split(testset_to_be_split, [0.5, 0.5], generator=generator1)
 
     val_loader = DataLoader(valset, batch_size=batch_size, shuffle=False)
     
@@ -188,7 +188,7 @@ def main(config) -> None:
     elif model_name == "custom":
         model = CNN_model(in_channels, n_classes, img_size, img_size)
     else:
-        model = CNN_model3(in_channels, n_classes, img_size, img_size)
+        model = CNN_model(in_channels, n_classes, img_size, img_size)
 
     # Magic
     wandb.watch(model, log_freq=50)
