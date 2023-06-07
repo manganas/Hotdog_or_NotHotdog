@@ -99,7 +99,7 @@ def main():
 
     # Now plot these indices
 
-    fig, ax = plt.subplots(1,n_to_plot)
+    fig, ax = plt.subplots(1,n_to_plot, figsize=(12, 4))
     fig.tight_layout()
     for i in range(len(idx)):
         img_ = bad_images_tsnr[i].squeeze()
@@ -116,7 +116,8 @@ def main():
         # bad_pred = testset_to_be_split.labels[bad_labels[i].cpu().numpy()]
         # true_pred = testset_to_be_split.labels[true_labels[i].cpu().numpy()]
         ax[i].set_title(f"Predicted: {bad_pred}\nTrue: {true_pred}")
-
+    
+    # plt.subplots_adjust(wspace=0.1, hspace=0.3)
     plt.savefig('test_plot.pdf')
     plt.show()
 
