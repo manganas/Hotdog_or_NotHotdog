@@ -33,7 +33,7 @@ def save_saliency(saliency):
     
 
 
-def get_smooth_grad(image, model, n_samples=25, std_dev=0.1):
+def get_smooth_grad(image, model, n_samples=25, noise_level=0.1):
     """
     Computes the SmoothGrad saliency map of a given image and model.
 
@@ -41,7 +41,7 @@ def get_smooth_grad(image, model, n_samples=25, std_dev=0.1):
         image (torch.Tensor): the input image
         model (torch.nn.Module): the model
         n_samples (int): the number of noisy samples to generate
-        std_dev (float): the standard deviation of the noise
+        noise level (float): Percentage, so < 1 and >0
 
     Returns:
         saliency_map (torch.Tensor): the computed saliency map
@@ -62,6 +62,8 @@ def get_smooth_grad(image, model, n_samples=25, std_dev=0.1):
 
     image = image.cpu().numpy()
     total_gradients = np.zeros_like(image)
+
+    std_dev = noise_level*(image.max()-image.min())
     # Create noisy samples and compute gradients
     for _ in range(n_samples):
         # Create a noisy image
@@ -75,6 +77,10 @@ def get_smooth_grad(image, model, n_samples=25, std_dev=0.1):
 
         # Get the index of the max log-probability
         index = np.argmax(output.data.cpu().numpy())
+
+        print(output)
+        print(index)
+        return
 
         one_hot = np.zeros((1, output.size()[-1]), dtype=np.float32)
         one_hot[0][index] = 1
@@ -117,6 +123,7 @@ def main(config):
     print(f"configuration: \n {OmegaConf.to_yaml(config)}")
 
     hparams = config.experiment
+    model_path = '/zhome/39/c/174709/git/Hotdog_or_NotHotodog/models/testing_save_model.pt'
 
     # Load a model
     model = get_model(hparams)
@@ -130,7 +137,7 @@ def main(config):
                 transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
             ]
         )
-
+    
     testset_to_be_split = HotDogDataset(hparams['dataset_path'], train=False, transform=test_transformation)
 
     generator1 = torch.Generator().manual_seed(hparams['seed'])
