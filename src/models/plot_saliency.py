@@ -6,27 +6,39 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 
 from src.data.dataset import HotDogDataset
-from src.models.model import VGG_19_model, ResNet_model, CNN_model3
+from src.models.model import VGG_19_model, ResNet_model, CNN_model
 
 from omegaconf import OmegaConf
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-def save_saliency(saliency):
+def save_saliency(saliency, image, noise_lvl, n_samples, label):
     
     img_sal = torch.permute(torch.from_numpy(saliency), (1,2,0)).cpu().numpy()
-    img_nomr = np.zeros_like(img_sal)
+    img_sal = np.max(img_sal, axis=-1)
+    img_nomr = (img_sal - img_sal.min()) / (img_sal.max() / img_sal.min()) 
 
-    for i in range(3):
-        img_nomr[i,:,:] = 255/(img_sal[i,:,:].max()-img_sal[i,:,:].min())*(img_sal[i,:,:]-img_sal[i,:,:].min())
-        img_nomr[i, :, :] = img_nomr[i, :,:].astype(int)
 
+    image = torch.permute(image[0], (1,2,0)).cpu().numpy()
+    
     fig = plt.figure()
-    plt.imshow(img_nomr)
+    fig.tight_layout()
+    plt.tight_layout()
 
+    plt.subplot(1,2,1)
+    plt.imshow(image)
 
-    plt.savefig('saliency.pdf')
+    plt.axis(False)
+
+    plt.subplot(1,2,2)
+    plt.imshow(img_nomr, cmap='gray')
+
+    plt.axis(False)
+    
+    plt.suptitle(f"TL: {label}\nNoise_level: {noise_lvl}\n N samples: {n_samples}")
+
+    plt.savefig(f'saliency_{noise_lvl}_{n_samples}.pdf')
     plt.show()
 
 
@@ -78,9 +90,9 @@ def get_smooth_grad(image, model, n_samples=25, noise_level=0.1):
         # Get the index of the max log-probability
         index = np.argmax(output.data.cpu().numpy())
 
-        print(output)
-        print(index)
-        return
+        # print(output)
+        # print(index)
+        
 
         one_hot = np.zeros((1, output.size()[-1]), dtype=np.float32)
         one_hot[0][index] = 1
@@ -112,7 +124,7 @@ def get_model(hparams):
     elif model_name=='resnet':
         model = ResNet_model(use_pretrained=hparams['use_pretrained'])
     else:
-        model = CNN_model3(3, 2, 224, 224)    
+        model = CNN_model(3, 2, 224, 224)    
 
     model.load_state_dict(torch.load(load_path)['model'])
     model.eval()
@@ -141,28 +153,40 @@ def main(config):
     testset_to_be_split = HotDogDataset(hparams['dataset_path'], train=False, transform=test_transformation)
 
     generator1 = torch.Generator().manual_seed(hparams['seed'])
-    _, testset =  random_split(testset_to_be_split, [0.2, 0.8], generator=generator1)
+    _, testset =  random_split(testset_to_be_split, [0.5, 0.5], generator=generator1)
 
     test_loader = DataLoader(testset, batch_size=hparams['batch_size'], shuffle=False)
     
     ###### Change this! only to test
     
-    for i, (inputs, _) in enumerate(test_loader):
-        image = inputs
-        break
 
-    image = image.data[0]
+
+    stop_batch = 0 # 13
+    im_n = 5 # 2
+
+    for i, (inputs, labels) in enumerate(test_loader):
+        image = inputs
+        label = labels
+        if i == stop_batch:
+            break
+    
+    
+    image = image.data[im_n]
+    label = testset_to_be_split.labels[label.data[im_n].cpu().numpy()]
+
+    # print(label)
 
     # image = next(iter(test_loader))[0]
 
     image = torch.unsqueeze(image, 0)  # Adds a batch dimension
 
+    
+    noise_level = 0.2
+    n_samples = 15
 
-    saliency_map = get_smooth_grad(image, model)
+    saliency_map = get_smooth_grad(image, model,n_samples=n_samples, noise_level=noise_level)
 
-    print(saliency_map.min(), saliency_map.max())
-
-    save_saliency(saliency_map)
+    save_saliency(saliency_map, image, noise_level, n_samples, label)
 
 
 if __name__=='__main__':
