@@ -152,6 +152,8 @@ class CNN_model(nn.Module):
             #nn.Dropout(dropout_rate)  # Adding dropout after conv layers
         )
 
+        
+
         x = torch.rand(1, in_channels, h, w)
         lin_in_dim = self.get_output_conv_shape(x)
 
@@ -204,6 +206,7 @@ class VGG_19_model(nn.Module):
             model = vgg19_bn(weights=weights)
         else:
             model = vgg19_bn()
+
 
         children = list(model.children())
 
