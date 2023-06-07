@@ -37,13 +37,13 @@ def main():
     testset_to_be_split = HotDogDataset(data_path, train=False, transform=test_transformation)
 
     generator1 = torch.Generator().manual_seed(seed)
-    _, testset =  random_split(testset_to_be_split, [0.2, 0.8], generator=generator1)
+    _, testset =  random_split(testset_to_be_split, [0.5, 0.5], generator=generator1)
 
-    test_loader = DataLoader(testset, batch_size=batch_size, shuffle=False)
+    test_loader = DataLoader(testset, batch_size=batch_size, shuffle=True)
 
     # Get the model
     model = CNN_model(3, 2, 224, 224)
-    # model.load_state_dict(torch.load(saved_weights_path)['model'])
+    model.load_state_dict(torch.load(saved_weights_path)['model'])
     model.to(device)
     model.eval()
 
@@ -73,6 +73,8 @@ def main():
 
         # Get the max wrong prob
         max_output_probs, _ = output.max(1)
+        
+
         b =(max_output_probs  >= probs_of_wrong.max() ) & (predicted != target)
         mask_p = torch.where(b, True, False)
         
