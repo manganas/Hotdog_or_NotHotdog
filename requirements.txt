@@ -13,3 +13,5 @@ omegaconf
 wandb
 six
 matplotlib
+scikit_learn
+seaborn
