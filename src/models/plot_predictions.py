@@ -193,7 +193,15 @@ def main():
     plt.show()
 
 
+    # # Can I make the closest to the boundary image change predicted class? No
+    # from src.models.plot_saliency import get_smooth_grad
 
+    # img = at_boundary_img_tsnr[0]
+    # saliency = get_smooth_grad(img,model)
+    # img_sal = torch.permute(torch.from_numpy(saliency), (1,2,0)).cpu().numpy()
+    # img_sal = np.max(img_sal, axis=-1)
+
+    # img_new = 
 
 
     #### Plot the most wrongly classified images

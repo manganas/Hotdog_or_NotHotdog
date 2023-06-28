@@ -106,7 +106,10 @@ def get_smooth_grad(image, model, n_samples=25, noise_level=0.1):
         total_gradients += grad
 
     # Average per gradient feature dim, I have n_samples depth
+    
     avg_gradients = total_gradients[0, :, :, :] / n_samples
+    
+    # avg_gradients = total_gradients[0,:,:,:].mean(axis=0)
 
     return avg_gradients
 
@@ -118,7 +121,7 @@ def place_saliency_map(saliency, axis):
     img_sal = torch.permute(torch.from_numpy(saliency), (1,2,0)).cpu().numpy()
     img_sal = np.max(img_sal, axis=-1)
     img_norm = (img_sal - img_sal.min()) / (img_sal.max() / img_sal.min())
-    axis.imshow(img_norm, cmap='hot')
+    axis.imshow(img_norm, cmap='gray')
     axis.set_axis_off()
 
 
